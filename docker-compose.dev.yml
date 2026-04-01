@@ -1,0 +1,94 @@
+services:
+    helpdesk-api:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile.dev
+        command: yarn start:dev:api
+        ports:
+            - '${API_PORT:-3003}:3003'
+            - '9229:9229'
+        environment:
+            - API_PORT=3003
+            - API_NODE_ENV=development
+            - API_PG_DB_HOST=db_postgres
+            - API_PG_DB_PORT=5432
+            - API_PG_DB_USERNAME=${API_PG_DB_USERNAME:-kodus}
+            - API_PG_DB_PASSWORD=${API_PG_DB_PASSWORD:-kodus}
+            - API_PG_DB_DATABASE=${API_PG_DB_DATABASE:-kodus_db}
+            - JWT_SECRET=${JWT_SECRET:-helpdesk-dev-secret}
+            - KODUS_JWT_SECRET=${KODUS_JWT_SECRET:-}
+            - RUN_MIGRATIONS=${RUN_MIGRATIONS:-true}
+            - RUN_SEEDS=${RUN_SEEDS:-true}
+        volumes:
+            - .:/app
+            - /app/node_modules
+        depends_on:
+            db_postgres:
+                condition: service_healthy
+        deploy:
+            resources:
+                limits:
+                    memory: 1.5G
+                reservations:
+                    memory: 512M
+        healthcheck:
+            test: ['CMD', 'curl', '-f', 'http://localhost:3003/api/health']
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
+        networks:
+            - helpdesk-network
+
+    helpdesk-web:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile.dev
+        command: yarn start:dev:web
+        ports:
+            - '${WEB_PORT:-3000}:3000'
+        environment:
+            - WEB_NODE_ENV=development
+            - WEB_HOSTNAME_API=http://helpdesk-api:3003
+        volumes:
+            - .:/app
+            - /app/node_modules
+            - /app/apps/web/.next
+        depends_on:
+            helpdesk-api:
+                condition: service_healthy
+        deploy:
+            resources:
+                limits:
+                    memory: 2G
+                reservations:
+                    memory: 512M
+        networks:
+            - helpdesk-network
+
+    db_postgres:
+        image: postgres:16
+        ports:
+            - '${DB_PORT:-5433}:5432'
+        environment:
+            - POSTGRES_USER=${API_PG_DB_USERNAME:-kodus}
+            - POSTGRES_PASSWORD=${API_PG_DB_PASSWORD:-kodus}
+            - POSTGRES_DB=${API_PG_DB_DATABASE:-kodus_db}
+        volumes:
+            - helpdesk_pgdata:/var/lib/postgresql/data
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U ${API_PG_DB_USERNAME:-kodus}']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        profiles:
+            - local-db
+        networks:
+            - helpdesk-network
+
+volumes:
+    helpdesk_pgdata:
+
+networks:
+    helpdesk-network:
+        driver: bridge

@@ -1,0 +1,24 @@
+FROM node:22.22.0-slim
+
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
+
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    python3 \
+    make \
+    g++ \
+    procps \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY package.json yarn.lock* ./
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+
+RUN yarn install
+
+COPY . .
+
+ENTRYPOINT ["./docker/dev-entrypoint.sh"]

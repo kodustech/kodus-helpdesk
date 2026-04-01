@@ -1,0 +1,11 @@
+{
+    "name": "@kodus/helpdesk-api",
+    "version": "0.0.1",
+    "main": "dist/main.js",
+    "scripts": {
+        "build": "nest build api",
+        "start": "node dist/main.js",
+        "start:dev": "nest start api --watch --debug 9229",
+        "start:debug": "nest start api --debug --watch"
+    }
+}

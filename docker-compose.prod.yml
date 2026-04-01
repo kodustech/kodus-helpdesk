@@ -1,0 +1,50 @@
+services:
+    helpdesk-api:
+        image: ghcr.io/kodustech/kodus-helpdesk-api:${HELPDESK_VERSION:-latest}
+        ports:
+            - '${API_PORT:-3003}:3003'
+        env_file:
+            - .env.prod
+        environment:
+            - API_NODE_ENV=production
+            - RUN_MIGRATIONS=true
+            - RUN_SEEDS=true
+        deploy:
+            resources:
+                limits:
+                    memory: 1.5G
+                reservations:
+                    memory: 512M
+        logging:
+            driver: json-file
+            options:
+                max-size: '200m'
+                max-file: '10'
+        networks:
+            - helpdesk-network
+
+    helpdesk-web:
+        image: ghcr.io/kodustech/kodus-helpdesk-web:${HELPDESK_VERSION:-latest}
+        ports:
+            - '${WEB_PORT:-3000}:3000'
+        env_file:
+            - .env.prod
+        depends_on:
+            - helpdesk-api
+        deploy:
+            resources:
+                limits:
+                    memory: 2G
+                reservations:
+                    memory: 512M
+        logging:
+            driver: json-file
+            options:
+                max-size: '200m'
+                max-file: '10'
+        networks:
+            - helpdesk-network
+
+networks:
+    helpdesk-network:
+        driver: bridge
