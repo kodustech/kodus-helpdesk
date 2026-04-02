@@ -1,1 +1,53 @@
 @import 'tailwindcss';
+
+@theme {
+    --color-background: #101019;
+    --color-card-lv1: #181825;
+    --color-card-lv2: #202032;
+    --color-card-lv3: #30304b;
+
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #cdcddf;
+    --color-text-tertiary: #f3f3f780;
+
+    --color-primary: #f8b76d;
+    --color-primary-hover: #e5a55d;
+    --color-secondary: #c9bbf2;
+
+    --color-success: #42be65;
+    --color-danger: #fa5867;
+    --color-warning: #ff8b40;
+    --color-info: #5190ff;
+
+    --color-border: #30304b;
+    --color-border-hover: #4a4a6a;
+
+    --color-input-bg: #202032;
+    --color-input-border: #30304b;
+    --color-input-focus: #f8b76d;
+
+    --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'Overpass Mono', ui-monospace, monospace;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px var(--color-input-bg) inset;
+    -webkit-text-fill-color: var(--color-text-primary);
+    transition: background-color 5000s ease-in-out 0s;
+}

@@ -1,7 +1,8 @@
 import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
 
-dotenv.config();
+// override: false ensures container env vars take priority over .env file
+dotenv.config({ override: false });
 
 export default new DataSource({
     type: 'postgres',

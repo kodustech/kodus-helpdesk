@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
     env: {
         WEB_NODE_ENV: process.env.WEB_NODE_ENV,
         WEB_HOSTNAME_API: process.env.WEB_HOSTNAME_API,
+        NEXT_PUBLIC_API_URL: process.env.WEB_HOSTNAME_API || 'http://localhost:3003',
     },
     async headers() {
         return [
