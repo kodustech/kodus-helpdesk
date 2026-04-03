@@ -1,7 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthApi } from '@/core/hooks/useAuthApi';
+import { useSession } from 'next-auth/react';
+
+const COMMON_TIMEZONES = [
+    'UTC',
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Los_Angeles',
+    'America/Sao_Paulo',
+    'America/Argentina/Buenos_Aires',
+    'Europe/London',
+    'Europe/Paris',
+    'Europe/Berlin',
+    'Europe/Madrid',
+    'Europe/Lisbon',
+    'Asia/Tokyo',
+    'Asia/Shanghai',
+    'Asia/Kolkata',
+    'Asia/Dubai',
+    'Australia/Sydney',
+    'Pacific/Auckland',
+];
 
 const PASSWORD_RULES = [
     { label: 'At least 8 characters', test: (p: string) => p.length >= 8 },
@@ -15,13 +37,36 @@ const PASSWORD_RULES = [
 ];
 
 export default function SettingsPage() {
-    const api = useAuthApi();
+    const { api } = useAuthApi();
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+
+    // Timezone
+    const [timezone, setTimezone] = useState('');
+    const [tzLoading, setTzLoading] = useState(false);
+    const [tzSuccess, setTzSuccess] = useState('');
+
+    useEffect(() => {
+        // Detect browser timezone as default
+        const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        setTimezone(browserTz);
+    }, []);
+
+    const handleTimezoneChange = async (tz: string) => {
+        setTimezone(tz);
+        setTzLoading(true);
+        setTzSuccess('');
+        try {
+            await api.patch('/users/timezone', { timezone: tz });
+            setTzSuccess('Timezone updated');
+            setTimeout(() => setTzSuccess(''), 3000);
+        } catch { }
+        setTzLoading(false);
+    };
 
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -63,26 +108,68 @@ export default function SettingsPage() {
     };
 
     return (
-        <div>
-            <h1 className="mb-6 text-2xl font-bold">Settings</h1>
+        <>
+            {/* Page Header */}
+            <div className="flex min-h-12 shrink-0 items-center gap-6">
+                <h1 className="text-2xl font-semibold text-text-primary">
+                    Settings
+                </h1>
+            </div>
 
-            <div className="max-w-md rounded-xl bg-card-lv1 p-6">
-                <h2 className="mb-4 text-lg font-semibold">Change Password</h2>
+            {/* Timezone Card */}
+            <div className="flex max-w-lg flex-col overflow-hidden rounded-xl bg-card-lv2 shadow-sm ring-1 ring-card-lv3">
+                <div className="flex flex-col gap-y-1.5 p-6">
+                    <h2 className="text-lg font-bold leading-none text-text-primary">
+                        Timezone
+                    </h2>
+                    <p className="text-sm text-text-secondary">
+                        Set your timezone for date and time display
+                    </p>
+                </div>
+                <div className="flex flex-col gap-4 p-6 pt-0">
+                    <select
+                        value={timezone}
+                        onChange={(e) => handleTimezoneChange(e.target.value)}
+                        disabled={tzLoading}
+                        className="flex h-12 w-full items-center rounded-xl bg-card-lv1 px-6 text-sm text-text-primary ring-1 ring-card-lv3 transition hover:brightness-120 focus:ring-3 focus:brightness-120 disabled:opacity-50"
+                    >
+                        {COMMON_TIMEZONES.map((tz) => (
+                            <option key={tz} value={tz}>
+                                {tz.replace(/_/g, ' ')}
+                            </option>
+                        ))}
+                    </select>
+                    {tzSuccess && (
+                        <p className="text-sm text-success">{tzSuccess}</p>
+                    )}
+                </div>
+            </div>
 
-                <form onSubmit={handleChangePassword} className="space-y-4">
+            {/* Change Password Card */}
+            <div className="flex max-w-lg flex-col overflow-hidden rounded-xl bg-card-lv2 shadow-sm ring-1 ring-card-lv3">
+                <div className="flex flex-col gap-y-1.5 p-6">
+                    <h2 className="text-lg font-bold leading-none text-text-primary">
+                        Change Password
+                    </h2>
+                    <p className="text-sm text-text-secondary">
+                        Update your account password
+                    </p>
+                </div>
+
+                <form onSubmit={handleChangePassword} className="flex flex-col gap-6 p-6 pt-0">
                     {error && (
-                        <div className="rounded-lg bg-danger/10 p-3 text-sm text-danger">
+                        <div className="flex items-center gap-4 rounded-xl bg-danger/10 p-4 text-sm text-danger">
                             {error}
                         </div>
                     )}
                     {success && (
-                        <div className="rounded-lg bg-success/10 p-3 text-sm text-success">
+                        <div className="flex items-center gap-4 rounded-xl bg-success/10 p-4 text-sm text-success">
                             {success}
                         </div>
                     )}
 
-                    <div>
-                        <label className="mb-1 block text-sm text-text-secondary">
+                    <div className="flex flex-col gap-1">
+                        <label className="text-sm font-medium text-text-primary select-none">
                             Current Password
                         </label>
                         <input
@@ -90,12 +177,12 @@ export default function SettingsPage() {
                             value={currentPassword}
                             onChange={(e) => setCurrentPassword(e.target.value)}
                             required
-                            className="w-full rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-text-primary outline-none focus:border-input-focus"
+                            className="flex h-12 w-full items-center rounded-xl bg-card-lv1 px-6 text-sm text-text-primary ring-1 ring-card-lv3 transition placeholder:text-text-placeholder/50 hover:brightness-120 focus:ring-3 focus:brightness-120"
                         />
                     </div>
 
-                    <div>
-                        <label className="mb-1 block text-sm text-text-secondary">
+                    <div className="flex flex-col gap-1">
+                        <label className="text-sm font-medium text-text-primary select-none">
                             New Password
                         </label>
                         <input
@@ -103,13 +190,13 @@ export default function SettingsPage() {
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             required
-                            className="w-full rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-text-primary outline-none focus:border-input-focus"
+                            className="flex h-12 w-full items-center rounded-xl bg-card-lv1 px-6 text-sm text-text-primary ring-1 ring-card-lv3 transition placeholder:text-text-placeholder/50 hover:brightness-120 focus:ring-3 focus:brightness-120"
                         />
-                        <div className="mt-2 space-y-1">
+                        <div className="mt-2 flex flex-col gap-1.5">
                             {PASSWORD_RULES.map((rule) => (
                                 <div
                                     key={rule.label}
-                                    className={`text-xs ${
+                                    className={`text-[13px] leading-none ${
                                         newPassword && rule.test(newPassword)
                                             ? 'text-success'
                                             : 'text-text-tertiary'
@@ -124,8 +211,8 @@ export default function SettingsPage() {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="mb-1 block text-sm text-text-secondary">
+                    <div className="flex flex-col gap-1">
+                        <label className="text-sm font-medium text-text-primary select-none">
                             Confirm New Password
                         </label>
                         <input
@@ -133,25 +220,24 @@ export default function SettingsPage() {
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             required
-                            className="w-full rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-text-primary outline-none focus:border-input-focus"
+                            className="flex h-12 w-full items-center rounded-xl bg-card-lv1 px-6 text-sm text-text-primary ring-1 ring-card-lv3 transition placeholder:text-text-placeholder/50 hover:brightness-120 focus:ring-3 focus:brightness-120"
                         />
-                        {confirmPassword &&
-                            newPassword !== confirmPassword && (
-                                <p className="mt-1 text-xs text-danger">
-                                    Passwords do not match
-                                </p>
-                            )}
+                        {confirmPassword && newPassword !== confirmPassword && (
+                            <p className="mt-1.5 text-[13px] leading-none text-danger">
+                                Passwords do not match
+                            </p>
+                        )}
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full rounded-lg bg-primary px-4 py-2.5 font-semibold text-background hover:bg-primary-hover disabled:opacity-50"
+                        className="inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-primary-light px-5 py-2.5 text-sm font-semibold text-primary-dark transition hover:brightness-120 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {loading ? 'Changing...' : 'Change Password'}
                     </button>
                 </form>
             </div>
-        </div>
+        </>
     );
 }

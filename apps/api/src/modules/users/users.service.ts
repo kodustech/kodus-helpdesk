@@ -213,6 +213,13 @@ export class UsersService {
         return { message: 'Invite accepted successfully' };
     }
 
+    async updateTimezone(userUuid: string, timezone: string) {
+        const user = await this.findByUuid(userUuid);
+        user.timezone = timezone;
+        await this.userRepository.save(user);
+        return { message: 'Timezone updated successfully', timezone };
+    }
+
     async changePassword(
         userUuid: string,
         currentPassword: string,

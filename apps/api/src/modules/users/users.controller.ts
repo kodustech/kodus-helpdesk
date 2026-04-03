@@ -13,6 +13,7 @@ import { InviteUsersDto } from './dto/invite-users.dto';
 import { AcceptInviteDto } from './dto/accept-invite.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangeRoleDto } from './dto/change-role.dto';
+import { UpdateTimezoneDto } from './dto/update-timezone.dto';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -71,6 +72,14 @@ export class UsersController {
             dto.password,
             dto.confirm_password,
         );
+    }
+
+    @Patch('timezone')
+    async updateTimezone(
+        @Body() dto: UpdateTimezoneDto,
+        @CurrentUser() user: UserModel,
+    ) {
+        return this.usersService.updateTimezone(user.uuid, dto.timezone);
     }
 
     @Patch('password')

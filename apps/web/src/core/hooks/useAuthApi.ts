@@ -1,11 +1,18 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useMemo } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 
 export function useAuthApi() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
+    const tokenRef = useRef<string | null>(null);
+
+    const accessToken = session?.user?.accessToken ?? null;
+
+    useEffect(() => {
+        tokenRef.current = accessToken;
+    }, [accessToken]);
 
     const api = useMemo(() => {
         const instance = axios.create({
@@ -15,13 +22,18 @@ export function useAuthApi() {
             headers: { 'Content-Type': 'application/json' },
         });
 
-        if ((session as any)?.accessToken) {
-            instance.defaults.headers.common['Authorization'] =
-                `Bearer ${(session as any).accessToken}`;
-        }
+        instance.interceptors.request.use((config) => {
+            const token = tokenRef.current;
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+            return config;
+        });
 
         return instance;
-    }, [(session as any)?.accessToken]);
+    }, []);
 
-    return api;
+    const isReady = status === 'authenticated' && !!accessToken;
+
+    return { api, isReady };
 }

@@ -76,38 +76,43 @@ export default function InvitePage() {
 
     if (loadingInvite) {
         return (
-            <div className="rounded-xl bg-card-lv1 p-8 text-center text-text-secondary">
-                Loading invite...
-            </div>
+            <div className="text-text-secondary text-sm">Loading invite...</div>
         );
     }
 
     if (success) {
         return (
-            <div className="rounded-xl bg-card-lv1 p-8 text-center">
-                <h2 className="mb-2 text-xl font-bold text-success">
-                    Account Created!
-                </h2>
-                <p className="mb-4 text-text-secondary">
-                    Your account has been set up successfully.
-                </p>
+            <>
+                <div className="flex flex-col items-center gap-4">
+                    <div className="flex size-16 items-center justify-center rounded-full bg-success/10">
+                        <svg className="size-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <h2 className="text-xl font-semibold text-text-primary">
+                        Account Created!
+                    </h2>
+                    <p className="text-sm text-text-secondary text-center">
+                        Your account has been set up successfully.
+                    </p>
+                </div>
                 <button
                     onClick={() => router.push('/sign-in')}
-                    className="rounded-lg bg-primary px-6 py-2.5 font-semibold text-background hover:bg-primary-hover"
+                    className="inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-xl bg-primary-light px-6 py-3 text-sm font-semibold text-primary-dark transition hover:brightness-120"
                 >
                     Sign in
                 </button>
-            </div>
+            </>
         );
     }
 
     if (!inviteData) {
         return (
-            <div className="rounded-xl bg-card-lv1 p-8 text-center">
-                <h2 className="mb-2 text-xl font-bold text-danger">
+            <div className="flex flex-col items-center gap-4">
+                <h2 className="text-xl font-semibold text-danger">
                     Invalid Invite
                 </h2>
-                <p className="text-text-secondary">
+                <p className="text-sm text-text-secondary text-center">
                     {error || 'This invite link is invalid or has expired.'}
                 </p>
             </div>
@@ -115,30 +120,34 @@ export default function InvitePage() {
     }
 
     return (
-        <div className="rounded-xl bg-card-lv1 p-8">
-            <div className="mb-6 text-center">
-                <h1 className="text-2xl font-bold text-primary">
+        <>
+            {/* Header */}
+            <div className="flex w-full flex-col items-center gap-10">
+                <h1 className="text-2xl font-bold text-primary-light">
                     Kodus Helpdesk
                 </h1>
-                <p className="mt-2 text-sm text-text-secondary">
-                    {inviteData.customerName
-                        ? `You've been invited to join ${inviteData.customerName}`
-                        : "You've been invited to join Kodus Helpdesk"}
-                </p>
-                <p className="mt-1 text-xs text-text-tertiary">
-                    {inviteData.email}
-                </p>
+                <div className="flex flex-col items-center gap-2">
+                    <h2 className="text-xl font-semibold text-text-primary text-center">
+                        {inviteData.customerName
+                            ? `Join ${inviteData.customerName}`
+                            : 'Join Kodus Helpdesk'}
+                    </h2>
+                    <p className="text-sm text-text-secondary text-center">
+                        Complete your account setup for {inviteData.email}
+                    </p>
+                </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="grid w-full gap-6">
                 {error && (
-                    <div className="rounded-lg bg-danger/10 p-3 text-sm text-danger">
+                    <div className="flex items-center gap-4 rounded-xl bg-danger/10 p-4 text-sm text-danger">
                         {error}
                     </div>
                 )}
 
-                <div>
-                    <label className="mb-1 block text-sm text-text-secondary">
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-text-primary select-none">
                         Name
                     </label>
                     <input
@@ -146,13 +155,13 @@ export default function InvitePage() {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         required
-                        className="w-full rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-text-primary outline-none transition focus:border-input-focus"
+                        className="flex h-12 w-full items-center rounded-xl bg-card-lv2 px-6 text-sm text-text-primary ring-1 ring-card-lv3 transition placeholder:text-text-placeholder/50 hover:brightness-120 focus:ring-3 focus:brightness-120"
                         placeholder="Your name"
                     />
                 </div>
 
-                <div>
-                    <label className="mb-1 block text-sm text-text-secondary">
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-text-primary select-none">
                         Password
                     </label>
                     <input
@@ -160,14 +169,14 @@ export default function InvitePage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="w-full rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-text-primary outline-none transition focus:border-input-focus"
+                        className="flex h-12 w-full items-center rounded-xl bg-card-lv2 px-6 text-sm text-text-primary ring-1 ring-card-lv3 transition placeholder:text-text-placeholder/50 hover:brightness-120 focus:ring-3 focus:brightness-120"
                         placeholder="Create a password"
                     />
-                    <div className="mt-2 space-y-1">
+                    <div className="mt-2 flex flex-col gap-1.5">
                         {PASSWORD_RULES.map((rule) => (
                             <div
                                 key={rule.label}
-                                className={`text-xs ${
+                                className={`text-[13px] leading-none ${
                                     password && rule.test(password)
                                         ? 'text-success'
                                         : 'text-text-tertiary'
@@ -180,8 +189,8 @@ export default function InvitePage() {
                     </div>
                 </div>
 
-                <div>
-                    <label className="mb-1 block text-sm text-text-secondary">
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-text-primary select-none">
                         Confirm Password
                     </label>
                     <input
@@ -189,11 +198,11 @@ export default function InvitePage() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
-                        className="w-full rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-text-primary outline-none transition focus:border-input-focus"
+                        className="flex h-12 w-full items-center rounded-xl bg-card-lv2 px-6 text-sm text-text-primary ring-1 ring-card-lv3 transition placeholder:text-text-placeholder/50 hover:brightness-120 focus:ring-3 focus:brightness-120"
                         placeholder="Confirm your password"
                     />
                     {confirmPassword && password !== confirmPassword && (
-                        <p className="mt-1 text-xs text-danger">
+                        <p className="mt-1.5 text-[13px] leading-none text-danger">
                             Passwords do not match
                         </p>
                     )}
@@ -202,11 +211,11 @@ export default function InvitePage() {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full rounded-lg bg-primary px-4 py-2.5 font-semibold text-background transition hover:bg-primary-hover disabled:opacity-50"
+                    className="inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-xl bg-primary-light px-6 py-3 text-sm font-semibold text-primary-dark transition hover:brightness-120 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {loading ? 'Setting up...' : 'Create Account'}
                 </button>
             </form>
-        </div>
+        </>
     );
 }

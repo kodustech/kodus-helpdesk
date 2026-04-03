@@ -7,6 +7,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { MailModule } from './modules/mail/mail.module';
+import { TicketsModule } from './modules/tickets/tickets.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
     imports: [
@@ -24,6 +26,8 @@ import { MailModule } from './modules/mail/mail.module';
         UsersModule,
         CustomersModule,
         MailModule,
+        TicketsModule,
+        NotificationsModule,
     ],
 })
 export class ApiModule {}

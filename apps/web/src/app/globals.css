@@ -1,39 +1,75 @@
 @import 'tailwindcss';
 
 @theme {
-    --color-background: #101019;
+    /* Card/Background */
     --color-card-lv1: #181825;
     --color-card-lv2: #202032;
     --color-card-lv3: #30304b;
+    --color-background: #101019;
 
+    /* Primary */
+    --color-primary-light: #f8b76d;
+    --color-primary-dark: #443024;
+
+    /* Secondary */
+    --color-secondary-light: #c9bbf2;
+    --color-secondary-dark: #312b4b;
+
+    /* Tertiary */
+    --color-tertiary-light: #fdbfbf;
+    --color-tertiary-dark: #592830;
+
+    /* Text */
     --color-text-primary: #ffffff;
+    --color-text-placeholder: #f3f3f7;
     --color-text-secondary: #cdcddf;
     --color-text-tertiary: #f3f3f780;
 
-    --color-primary: #f8b76d;
-    --color-primary-hover: #e5a55d;
-    --color-secondary: #c9bbf2;
-
+    /* Status */
     --color-success: #42be65;
-    --color-danger: #fa5867;
-    --color-warning: #ff8b40;
     --color-info: #5190ff;
+    --color-alert: #f2c631;
+    --color-warning: #ff8b40;
+    --color-danger: #fa5867;
 
-    --color-border: #30304b;
-    --color-border-hover: #4a4a6a;
+    /* Ring */
+    --color-ring: hsl(32 91.4% 54.3%);
 
-    --color-input-bg: #202032;
-    --color-input-border: #30304b;
-    --color-input-focus: #f8b76d;
+    /* Radius */
+    --radius-lg: 8px;
+    --radius-md: 6px;
+    --radius-sm: 4px;
 
+    /* Fonts */
     --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'Overpass Mono', ui-monospace, monospace;
 }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+@layer base {
+    *,
+    *::before,
+    *::after {
+        @apply border-card-lv3 ring-card-lv3 outline-none;
+    }
+
+    input,
+    a,
+    button {
+        @apply font-sans outline-none;
+    }
+
+    p {
+        @apply font-normal;
+    }
+
+    code,
+    code * {
+        font-family: var(--font-mono);
+    }
+}
+
+html {
+    color-scheme: dark;
 }
 
 body {
@@ -42,12 +78,17 @@ body {
     color: var(--color-text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
 }
 
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0px 1000px var(--color-input-bg) inset;
+    -webkit-box-shadow: 0 0 0px 1000px var(--color-card-lv2) inset;
     -webkit-text-fill-color: var(--color-text-primary);
     transition: background-color 5000s ease-in-out 0s;
 }

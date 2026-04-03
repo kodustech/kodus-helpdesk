@@ -51,6 +51,9 @@ export class UserModel extends CoreModel {
     @Column({ type: 'varchar', nullable: true, name: 'external_user_uuid' })
     externalUserUuid: string;
 
+    @Column({ type: 'varchar', nullable: true })
+    timezone: string;
+
     @ManyToOne(() => CustomerModel, { nullable: true, onDelete: 'SET NULL' })
     @JoinColumn({ name: 'customer_id' })
     customer: CustomerModel;

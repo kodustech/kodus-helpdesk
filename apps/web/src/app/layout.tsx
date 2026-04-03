@@ -27,8 +27,12 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en" className={`${dmSans.variable} ${overpassMono.variable}`}>
-            <body>
+        <html
+            lang="en"
+            className={`dark ${dmSans.variable} ${overpassMono.variable}`}
+            style={{ colorScheme: 'dark' }}
+        >
+            <body className={dmSans.className}>
                 <AuthSessionProvider>
                     <QueryProvider>{children}</QueryProvider>
                 </AuthSessionProvider>

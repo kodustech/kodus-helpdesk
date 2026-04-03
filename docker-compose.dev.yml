@@ -50,6 +50,7 @@ services:
         environment:
             - WEB_NODE_ENV=development
             - WEB_HOSTNAME_API=http://helpdesk-api:3003
+            - NEXT_PUBLIC_API_URL=http://localhost:${API_PORT:-3003}
             - AUTH_SECRET=${AUTH_SECRET:-helpdesk-nextauth-secret}
             - NEXTAUTH_URL=http://localhost:${WEB_PORT:-3004}
         volumes:

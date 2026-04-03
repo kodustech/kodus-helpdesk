@@ -3,9 +3,21 @@
     "version": "0.0.1",
     "private": true,
     "license": "UNLICENSED",
-    "workspaces": [
-        "apps/*"
-    ],
+    "workspaces": {
+        "packages": [
+            "apps/*"
+        ],
+        "nohoist": [
+            "**/next",
+            "**/next/**",
+            "**/react",
+            "**/react/**",
+            "**/react-dom",
+            "**/react-dom/**",
+            "**/@tiptap/**",
+            "**/@dnd-kit/**"
+        ]
+    },
     "scripts": {
         "start:dev:all": "concurrently --names api,web --prefix-colors blue,green \"yarn start:dev:api\" \"yarn start:dev:web\"",
         "start:dev:api": "cd apps/api && yarn start:dev",

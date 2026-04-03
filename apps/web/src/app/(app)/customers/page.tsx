@@ -12,7 +12,7 @@ interface Customer {
 }
 
 export default function CustomersPage() {
-    const api = useAuthApi();
+    const { api, isReady } = useAuthApi();
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
@@ -36,8 +36,8 @@ export default function CustomersPage() {
     };
 
     useEffect(() => {
-        fetchCustomers();
-    }, []);
+        if (isReady) fetchCustomers();
+    }, [isReady]);
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -59,12 +59,15 @@ export default function CustomersPage() {
     };
 
     return (
-        <div>
-            <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-2xl font-bold">Customers</h1>
+        <>
+            {/* Page Header */}
+            <div className="flex min-h-12 shrink-0 items-center justify-between gap-6">
+                <h1 className="text-2xl font-semibold text-text-primary">
+                    Customers
+                </h1>
                 <button
                     onClick={() => setShowCreate(true)}
-                    className="rounded-lg bg-primary px-4 py-2 font-semibold text-background hover:bg-primary-hover"
+                    className="inline-flex min-h-10 items-center justify-center gap-3 rounded-xl bg-primary-light px-5 py-2.5 text-sm font-semibold text-primary-dark transition hover:brightness-120"
                 >
                     New Customer
                 </button>
@@ -72,58 +75,57 @@ export default function CustomersPage() {
 
             {/* Create Modal */}
             {showCreate && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="w-full max-w-md rounded-xl bg-card-lv1 p-6">
-                        <h2 className="mb-4 text-lg font-bold">
-                            New Customer
-                        </h2>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                    <div className="flex w-full max-w-md flex-col overflow-hidden rounded-xl bg-card-lv2 shadow-sm">
+                        <div className="flex flex-col gap-y-1.5 p-6">
+                            <h2 className="text-lg font-bold leading-none text-text-primary">
+                                New Customer
+                            </h2>
+                            <p className="text-sm text-text-secondary">
+                                Create a new customer workspace
+                            </p>
+                        </div>
 
-                        <form onSubmit={handleCreate} className="space-y-4">
+                        <form onSubmit={handleCreate} className="flex flex-col gap-6 p-6 pt-0">
                             {error && (
-                                <div className="rounded-lg bg-danger/10 p-3 text-sm text-danger">
+                                <div className="flex items-center gap-4 rounded-xl bg-danger/10 p-4 text-sm text-danger">
                                     {error}
                                 </div>
                             )}
 
-                            <div>
-                                <label className="mb-1 block text-sm text-text-secondary">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-sm font-medium text-text-primary select-none">
                                     Company Name *
                                 </label>
                                 <input
                                     type="text"
                                     value={form.name}
                                     onChange={(e) =>
-                                        setForm({
-                                            ...form,
-                                            name: e.target.value,
-                                        })
+                                        setForm({ ...form, name: e.target.value })
                                     }
                                     required
-                                    className="w-full rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-text-primary outline-none focus:border-input-focus"
+                                    className="flex h-12 w-full items-center rounded-xl bg-card-lv1 px-6 text-sm text-text-primary ring-1 ring-card-lv3 transition placeholder:text-text-placeholder/50 hover:brightness-120 focus:ring-3 focus:brightness-120"
                                     placeholder="Company name"
                                 />
                             </div>
 
-                            <div>
-                                <label className="mb-1 block text-sm text-text-secondary">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-sm font-medium text-text-primary select-none">
                                     Website
                                 </label>
                                 <input
                                     type="text"
                                     value={form.site}
                                     onChange={(e) =>
-                                        setForm({
-                                            ...form,
-                                            site: e.target.value,
-                                        })
+                                        setForm({ ...form, site: e.target.value })
                                     }
-                                    className="w-full rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-text-primary outline-none focus:border-input-focus"
+                                    className="flex h-12 w-full items-center rounded-xl bg-card-lv1 px-6 text-sm text-text-primary ring-1 ring-card-lv3 transition placeholder:text-text-placeholder/50 hover:brightness-120 focus:ring-3 focus:brightness-120"
                                     placeholder="https://company.com"
                                 />
                             </div>
 
-                            <div>
-                                <label className="mb-1 block text-sm text-text-secondary">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-sm font-medium text-text-primary select-none">
                                     First User Email (Customer Owner) *
                                 </label>
                                 <input
@@ -136,23 +138,23 @@ export default function CustomersPage() {
                                         })
                                     }
                                     required
-                                    className="w-full rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-text-primary outline-none focus:border-input-focus"
+                                    className="flex h-12 w-full items-center rounded-xl bg-card-lv1 px-6 text-sm text-text-primary ring-1 ring-card-lv3 transition placeholder:text-text-placeholder/50 hover:brightness-120 focus:ring-3 focus:brightness-120"
                                     placeholder="user@company.com"
                                 />
                             </div>
 
-                            <div className="flex gap-3 pt-2">
+                            <div className="flex items-center gap-2 pt-2">
                                 <button
                                     type="button"
                                     onClick={() => setShowCreate(false)}
-                                    className="flex-1 rounded-lg border border-border px-4 py-2.5 text-text-secondary hover:text-text-primary"
+                                    className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold text-text-tertiary transition hover:text-text-primary"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={creating}
-                                    className="flex-1 rounded-lg bg-primary px-4 py-2.5 font-semibold text-background hover:bg-primary-hover disabled:opacity-50"
+                                    className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-primary-light px-5 py-2.5 text-sm font-semibold text-primary-dark transition hover:brightness-120 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {creating ? 'Creating...' : 'Create'}
                                 </button>
@@ -164,38 +166,38 @@ export default function CustomersPage() {
 
             {/* Customer List */}
             {loading ? (
-                <p className="text-text-secondary">Loading...</p>
+                <p className="text-sm text-text-secondary">Loading...</p>
             ) : customers.length === 0 ? (
-                <div className="rounded-xl bg-card-lv1 p-8 text-center text-text-secondary">
-                    No customers yet. Create your first customer to get started.
+                <div className="flex flex-col items-center justify-center gap-4 rounded-xl bg-card-lv2 p-12 shadow-sm">
+                    <p className="text-sm text-text-secondary">
+                        No customers yet. Create your first customer to get started.
+                    </p>
                 </div>
             ) : (
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                     {customers.map((customer) => (
                         <Link
                             key={customer.uuid}
                             href={`/customers/${customer.uuid}`}
-                            className="flex items-center justify-between rounded-xl bg-card-lv1 p-4 transition hover:bg-card-lv2"
+                            className="flex items-center justify-between rounded-xl bg-card-lv2 p-5 shadow-sm ring-1 ring-card-lv3 transition hover:brightness-120"
                         >
-                            <div>
-                                <h3 className="font-medium">
+                            <div className="flex flex-col gap-1">
+                                <h3 className="text-sm font-semibold text-text-primary">
                                     {customer.name}
                                 </h3>
                                 {customer.site && (
-                                    <p className="text-sm text-text-secondary">
+                                    <p className="text-[13px] text-text-secondary">
                                         {customer.site}
                                     </p>
                                 )}
                             </div>
-                            <span className="text-sm text-text-tertiary">
-                                {new Date(
-                                    customer.createdAt,
-                                ).toLocaleDateString()}
+                            <span className="text-[13px] text-text-tertiary">
+                                {new Date(customer.createdAt).toLocaleDateString()}
                             </span>
                         </Link>
                     ))}
                 </div>
             )}
-        </div>
+        </>
     );
 }

@@ -22,14 +22,14 @@ const ROLE_LABELS: Record<string, string> = {
     customer_editor: 'Customer Editor',
 };
 
-const STATUS_COLORS: Record<string, string> = {
-    active: 'text-success',
-    pending: 'text-warning',
-    removed: 'text-danger',
+const STATUS_STYLES: Record<string, string> = {
+    active: 'bg-success/10 text-success',
+    pending: 'bg-warning/10 text-warning',
+    removed: 'bg-danger/10 text-danger',
 };
 
 export default function UsersPage() {
-    const api = useAuthApi();
+    const { api, isReady } = useAuthApi();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [showInvite, setShowInvite] = useState(false);
@@ -50,8 +50,8 @@ export default function UsersPage() {
     };
 
     useEffect(() => {
-        fetchUsers();
-    }, []);
+        if (isReady) fetchUsers();
+    }, [isReady]);
 
     const handleInvite = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -79,12 +79,15 @@ export default function UsersPage() {
     };
 
     return (
-        <div>
-            <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-2xl font-bold">Users</h1>
+        <>
+            {/* Page Header */}
+            <div className="flex min-h-12 shrink-0 items-center justify-between gap-6">
+                <h1 className="text-2xl font-semibold text-text-primary">
+                    Users
+                </h1>
                 <button
                     onClick={() => setShowInvite(true)}
-                    className="rounded-lg bg-primary px-4 py-2 font-semibold text-background hover:bg-primary-hover"
+                    className="inline-flex min-h-10 items-center justify-center gap-3 rounded-xl bg-primary-light px-5 py-2.5 text-sm font-semibold text-primary-dark transition hover:brightness-120"
                 >
                     Invite Users
                 </button>
@@ -92,63 +95,64 @@ export default function UsersPage() {
 
             {/* Invite Modal */}
             {showInvite && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="w-full max-w-md rounded-xl bg-card-lv1 p-6">
-                        <h2 className="mb-4 text-lg font-bold">
-                            Invite Internal Users
-                        </h2>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                    <div className="flex w-full max-w-md flex-col overflow-hidden rounded-xl bg-card-lv2 shadow-sm">
+                        <div className="flex flex-col gap-y-1.5 p-6">
+                            <h2 className="text-lg font-bold leading-none text-text-primary">
+                                Invite Internal Users
+                            </h2>
+                            <p className="text-sm text-text-secondary">
+                                Invite users to the Kodus helpdesk team
+                            </p>
+                        </div>
 
-                        <form onSubmit={handleInvite} className="space-y-4">
+                        <form onSubmit={handleInvite} className="flex flex-col gap-6 p-6 pt-0">
                             {error && (
-                                <div className="rounded-lg bg-danger/10 p-3 text-sm text-danger">
+                                <div className="flex items-center gap-4 rounded-xl bg-danger/10 p-4 text-sm text-danger">
                                     {error}
                                 </div>
                             )}
 
-                            <div>
-                                <label className="mb-1 block text-sm text-text-secondary">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-sm font-medium text-text-primary select-none">
                                     Email addresses (comma separated)
                                 </label>
                                 <textarea
                                     value={inviteEmails}
-                                    onChange={(e) =>
-                                        setInviteEmails(e.target.value)
-                                    }
+                                    onChange={(e) => setInviteEmails(e.target.value)}
                                     required
                                     rows={3}
-                                    className="w-full rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-text-primary outline-none focus:border-input-focus"
+                                    className="flex w-full rounded-xl bg-card-lv1 px-6 py-4 text-sm text-text-primary ring-1 ring-card-lv3 transition placeholder:text-text-placeholder/50 hover:brightness-120 focus:ring-3 focus:brightness-120 resize-none"
                                     placeholder="user1@kodus.io, user2@kodus.io"
                                 />
                             </div>
 
-                            <div>
-                                <label className="mb-1 block text-sm text-text-secondary">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-sm font-medium text-text-primary select-none">
                                     Role
                                 </label>
                                 <select
                                     value={inviteRole}
-                                    onChange={(e) =>
-                                        setInviteRole(e.target.value)
-                                    }
-                                    className="w-full rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-text-primary outline-none focus:border-input-focus"
+                                    onChange={(e) => setInviteRole(e.target.value)}
+                                    className="flex h-12 w-full items-center rounded-xl bg-card-lv1 px-6 text-sm text-text-primary ring-1 ring-card-lv3 transition hover:brightness-120 focus:ring-3 focus:brightness-120"
                                 >
                                     <option value="editor">Editor</option>
                                     <option value="admin">Admin</option>
                                 </select>
                             </div>
 
-                            <div className="flex gap-3 pt-2">
+                            <div className="flex items-center gap-2 pt-2">
                                 <button
                                     type="button"
                                     onClick={() => setShowInvite(false)}
-                                    className="flex-1 rounded-lg border border-border px-4 py-2.5 text-text-secondary hover:text-text-primary"
+                                    className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold text-text-tertiary transition hover:text-text-primary"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={inviting}
-                                    className="flex-1 rounded-lg bg-primary px-4 py-2.5 font-semibold text-background hover:bg-primary-hover disabled:opacity-50"
+                                    className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-primary-light px-5 py-2.5 text-sm font-semibold text-primary-dark transition hover:brightness-120 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {inviting ? 'Inviting...' : 'Send Invites'}
                                 </button>
@@ -160,53 +164,39 @@ export default function UsersPage() {
 
             {/* Users Table */}
             {loading ? (
-                <p className="text-text-secondary">Loading...</p>
+                <p className="text-sm text-text-secondary">Loading...</p>
             ) : users.length === 0 ? (
-                <div className="rounded-xl bg-card-lv1 p-8 text-center text-text-secondary">
-                    No users found.
+                <div className="flex flex-col items-center justify-center gap-4 rounded-xl bg-card-lv2 p-12 shadow-sm">
+                    <p className="text-sm text-text-secondary">No users found.</p>
                 </div>
             ) : (
-                <div className="overflow-hidden rounded-xl bg-card-lv1">
+                <div className="overflow-hidden rounded-xl bg-card-lv2 shadow-sm ring-1 ring-card-lv3">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-border text-left text-sm text-text-secondary">
-                                <th className="px-4 py-3 font-medium">
-                                    Email
-                                </th>
-                                <th className="px-4 py-3 font-medium">Name</th>
-                                <th className="px-4 py-3 font-medium">Role</th>
-                                <th className="px-4 py-3 font-medium">
-                                    Status
-                                </th>
-                                <th className="px-4 py-3 font-medium">
-                                    Customer
-                                </th>
+                            <tr className="border-b border-card-lv3">
+                                <th className="px-6 py-3 text-left text-[13px] font-medium text-text-secondary">Email</th>
+                                <th className="px-6 py-3 text-left text-[13px] font-medium text-text-secondary">Name</th>
+                                <th className="px-6 py-3 text-left text-[13px] font-medium text-text-secondary">Role</th>
+                                <th className="px-6 py-3 text-left text-[13px] font-medium text-text-secondary">Status</th>
+                                <th className="px-6 py-3 text-left text-[13px] font-medium text-text-secondary">Customer</th>
                             </tr>
                         </thead>
                         <tbody>
                             {users.map((user) => (
-                                <tr
-                                    key={user.uuid}
-                                    className="border-b border-border/50 last:border-0"
-                                >
-                                    <td className="px-4 py-3 text-sm">
-                                        {user.email}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-text-secondary">
-                                        {user.name || '—'}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <span className="rounded-full bg-card-lv3 px-2 py-0.5 text-xs">
-                                            {ROLE_LABELS[user.role] ||
-                                                user.role}
+                                <tr key={user.uuid} className="border-b border-card-lv3/50 last:border-0">
+                                    <td className="px-6 py-4 text-sm text-text-primary">{user.email}</td>
+                                    <td className="px-6 py-4 text-sm text-text-secondary">{user.name || '—'}</td>
+                                    <td className="px-6 py-4">
+                                        <span className="inline-flex rounded-full bg-card-lv3 px-2.5 py-1 text-xs font-medium text-text-primary">
+                                            {ROLE_LABELS[user.role] || user.role}
                                         </span>
                                     </td>
-                                    <td
-                                        className={`px-4 py-3 text-sm ${STATUS_COLORS[user.status] || ''}`}
-                                    >
-                                        {user.status}
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[user.status] || ''}`}>
+                                            {user.status}
+                                        </span>
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-text-secondary">
+                                    <td className="px-6 py-4 text-sm text-text-secondary">
                                         {user.customer?.name || '—'}
                                     </td>
                                 </tr>
@@ -215,6 +205,6 @@ export default function UsersPage() {
                     </table>
                 </div>
             )}
-        </div>
+        </>
     );
 }
