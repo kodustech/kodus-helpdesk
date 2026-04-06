@@ -10,6 +10,7 @@ import {
     Query,
 } from '@nestjs/common';
 import { TicketsService } from './tickets.service';
+import { ActivitiesService } from './activities.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { UpdateTicketStatusDto } from './dto/update-ticket-status.dto';
@@ -22,7 +23,10 @@ import { UserModel } from '../users/entities/user.model';
 
 @Controller('tickets')
 export class TicketsController {
-    constructor(private readonly ticketsService: TicketsService) {}
+    constructor(
+        private readonly ticketsService: TicketsService,
+        private readonly activitiesService: ActivitiesService,
+    ) {}
 
     @Post()
     async create(
@@ -36,6 +40,11 @@ export class TicketsController {
             user,
             dto.customer_id,
         );
+    }
+
+    @Get('stats')
+    async getStats(@CurrentUser() user: UserModel) {
+        return this.ticketsService.getStats(user);
     }
 
     @Get()
@@ -82,8 +91,9 @@ export class TicketsController {
     async updateAssignee(
         @Param('uuid', ParseUUIDPipe) uuid: string,
         @Body() dto: UpdateTicketAssigneeDto,
+        @CurrentUser() user: UserModel,
     ) {
-        return this.ticketsService.updateAssignee(uuid, dto.assignee_id);
+        return this.ticketsService.updateAssignee(uuid, dto.assignee_id, user);
     }
 
     @Post(':uuid/labels')
@@ -91,8 +101,9 @@ export class TicketsController {
     async addLabels(
         @Param('uuid', ParseUUIDPipe) uuid: string,
         @Body() dto: AddLabelsDto,
+        @CurrentUser() user: UserModel,
     ) {
-        return this.ticketsService.addLabels(uuid, dto.label_ids);
+        return this.ticketsService.addLabels(uuid, dto.label_ids, user);
     }
 
     @Delete(':uuid/labels/:labelUuid')
@@ -100,8 +111,9 @@ export class TicketsController {
     async removeLabel(
         @Param('uuid', ParseUUIDPipe) uuid: string,
         @Param('labelUuid', ParseUUIDPipe) labelUuid: string,
+        @CurrentUser() user: UserModel,
     ) {
-        await this.ticketsService.removeLabel(uuid, labelUuid);
+        await this.ticketsService.removeLabel(uuid, labelUuid, user);
         return { message: 'Label removed from ticket' };
     }
 
@@ -111,5 +123,12 @@ export class TicketsController {
         @CurrentUser() user: UserModel,
     ) {
         return this.ticketsService.getMentionableUsers(uuid, user);
+    }
+
+    @Get(':uuid/activities')
+    async getActivities(
+        @Param('uuid', ParseUUIDPipe) uuid: string,
+    ) {
+        return this.activitiesService.findByTicket(uuid);
     }
 }

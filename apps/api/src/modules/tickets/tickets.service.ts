@@ -13,6 +13,8 @@ import { UserModel } from '../users/entities/user.model';
 import { EditorAssignmentModel } from '../users/entities/editor-assignment.model';
 import { CustomerModel } from '../customers/entities/customer.model';
 import { UserRole, TicketStatus } from '../../config/enums';
+import { NotificationsService } from '../notifications/notifications.service';
+import { ActivitiesService } from './activities.service';
 
 const INTERNAL_ROLES = [UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR];
 const CUSTOMER_ROLES = [
@@ -36,6 +38,8 @@ export class TicketsService {
         private readonly editorAssignmentRepository: Repository<EditorAssignmentModel>,
         @InjectRepository(CustomerModel)
         private readonly customerRepository: Repository<CustomerModel>,
+        private readonly notificationsService: NotificationsService,
+        private readonly activitiesService: ActivitiesService,
     ) {}
 
     async create(
@@ -93,7 +97,65 @@ export class TicketsService {
         });
 
         const saved = await this.ticketRepository.save(ticket);
-        return this.findByUuid(saved.uuid);
+        const fullTicket = await this.findByUuid(saved.uuid);
+
+        // Log activity
+        this.activitiesService.logTicketOpened(fullTicket, user).catch(() => {});
+
+        // Notify: new ticket from client → all management users
+        if (createdBySide === 'client') {
+            this.notificationsService
+                .notifyNewTicket(fullTicket, user)
+                .catch(() => {});
+        }
+
+        return fullTicket;
+    }
+
+    async getStats(user: UserModel): Promise<{
+        open: number;
+        in_progress: number;
+        resolved: number;
+        closed: number;
+        total: number;
+    }> {
+        const qb = this.ticketRepository
+            .createQueryBuilder('ticket')
+            .select('ticket.status', 'status')
+            .addSelect('COUNT(*)', 'count');
+
+        // Role-based filtering (same as findAll)
+        if (CUSTOMER_ROLES.includes(user.role)) {
+            if (!user.customer) {
+                return { open: 0, in_progress: 0, resolved: 0, closed: 0, total: 0 };
+            }
+            qb.where('ticket.customer_id = :custId', { custId: user.customer.uuid });
+        } else if (user.role === UserRole.EDITOR) {
+            const assignments = await this.editorAssignmentRepository.find({
+                where: { user: { uuid: user.uuid } },
+                relations: ['customer'],
+            });
+            const customerIds = assignments.map((a) => a.customer.uuid);
+            if (customerIds.length === 0) {
+                return { open: 0, in_progress: 0, resolved: 0, closed: 0, total: 0 };
+            }
+            qb.where('ticket.customer_id IN (:...customerIds)', { customerIds });
+        }
+
+        qb.groupBy('ticket.status');
+
+        const results = await qb.getRawMany();
+        const stats = { open: 0, in_progress: 0, resolved: 0, closed: 0, total: 0 };
+
+        for (const row of results) {
+            const count = parseInt(row.count, 10);
+            if (row.status in stats) {
+                (stats as any)[row.status] = count;
+            }
+            stats.total += count;
+        }
+
+        return stats;
     }
 
     async findAll(
@@ -193,6 +255,23 @@ export class TicketsService {
             }
         }
 
+        // Log activity for changes
+        if (data.title && data.title !== ticket.title) {
+            this.activitiesService
+                .logTitleChanged(ticket, ticket.title, data.title, user)
+                .catch(() => {});
+        }
+        if (data.description) {
+            this.activitiesService
+                .logDescriptionChanged(ticket, user)
+                .catch(() => {});
+        }
+        if (data.category && data.category !== ticket.category) {
+            this.activitiesService
+                .logCategoryChanged(ticket, ticket.category, data.category, user)
+                .catch(() => {});
+        }
+
         if (data.title) ticket.title = data.title;
         if (data.description) ticket.description = data.description;
         if (data.category) ticket.category = data.category as any;
@@ -210,12 +289,27 @@ export class TicketsService {
         const oldStatus = ticket.status;
         ticket.status = status;
         await this.ticketRepository.save(ticket);
-        return this.findByUuid(uuid);
+        const updated = await this.findByUuid(uuid);
+
+        if (oldStatus !== status) {
+            // Log activity
+            this.activitiesService
+                .logStatusChanged(updated, oldStatus, status, user)
+                .catch(() => {});
+
+            // Notify status change
+            this.notificationsService
+                .notifyStatusChange(updated, oldStatus, status, user)
+                .catch(() => {});
+        }
+
+        return updated;
     }
 
     async updateAssignee(
         uuid: string,
         assigneeId: string,
+        actor: UserModel,
     ): Promise<TicketModel> {
         const ticket = await this.findByUuid(uuid);
 
@@ -231,10 +325,22 @@ export class TicketsService {
 
         ticket.assignee = assignee;
         await this.ticketRepository.save(ticket);
-        return this.findByUuid(uuid);
+        const updated = await this.findByUuid(uuid);
+
+        // Log activity
+        this.activitiesService
+            .logAssigned(updated, assignee, actor)
+            .catch(() => {});
+
+        // Notify assignee
+        this.notificationsService
+            .notifyAssigned(updated, assignee, actor)
+            .catch(() => {});
+
+        return updated;
     }
 
-    async addLabels(uuid: string, labelIds: string[]): Promise<TicketModel> {
+    async addLabels(uuid: string, labelIds: string[], actor: UserModel): Promise<TicketModel> {
         const ticket = await this.findByUuid(uuid);
 
         const labels = await this.labelRepository.find({
@@ -244,6 +350,7 @@ export class TicketsService {
             throw new NotFoundException('One or more labels not found');
         }
 
+        const addedNames: string[] = [];
         for (const label of labels) {
             const existing = await this.ticketLabelRepository.findOne({
                 where: {
@@ -257,23 +364,37 @@ export class TicketsService {
                     label: { uuid: label.uuid } as LabelModel,
                 });
                 await this.ticketLabelRepository.save(tl);
+                addedNames.push(label.name);
             }
+        }
+
+        if (addedNames.length) {
+            this.activitiesService
+                .logLabelsAdded(ticket, addedNames, actor)
+                .catch(() => {});
         }
 
         return this.findByUuid(uuid);
     }
 
-    async removeLabel(ticketUuid: string, labelUuid: string): Promise<void> {
+    async removeLabel(ticketUuid: string, labelUuid: string, actor: UserModel): Promise<void> {
         const tl = await this.ticketLabelRepository.findOne({
             where: {
                 ticket: { uuid: ticketUuid },
                 label: { uuid: labelUuid },
             },
+            relations: ['label'],
         });
         if (!tl) {
             throw new NotFoundException('Label not found on this ticket');
         }
+
+        const labelName = tl.label?.name || 'Unknown';
         await this.ticketLabelRepository.remove(tl);
+
+        this.activitiesService
+            .logLabelsRemoved({ uuid: ticketUuid } as TicketModel, labelName, actor)
+            .catch(() => {});
     }
 
     async getMentionableUsers(

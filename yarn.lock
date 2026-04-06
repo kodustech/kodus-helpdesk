@@ -1369,6 +1369,11 @@
   resolved "https://registry.yarnpkg.com/@pkgr/core/-/core-0.2.9.tgz#d229a7b7f9dac167a156992ef23c7f023653f53b"
   integrity sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==
 
+"@popperjs/core@^2.9.0":
+  version "2.11.8"
+  resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.11.8.tgz#6b79032e760a0899cd4204710beede972a3a185f"
+  integrity sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==
+
 "@radix-ui/colors@^3.0.0":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@radix-ui/colors/-/colors-3.0.0.tgz#e8a591a303c44e503bd1212cacf40a09511165e0"
@@ -2325,6 +2330,11 @@
   resolved "https://registry.yarnpkg.com/@tiptap/extension-list/-/extension-list-3.22.1.tgz#5e20e66f73042189fff7abaee557206a9ee2d2bd"
   integrity sha512-6bVI5A12sFeyb0EngABV8/qCtC2IgiDbWC8mtNNLh5dAVGaUKo1KucL6vRYDhzXhyO/eHuGYepXZDLOOdS9LIQ==
 
+"@tiptap/extension-mention@^3.22.1":
+  version "3.22.1"
+  resolved "https://registry.yarnpkg.com/@tiptap/extension-mention/-/extension-mention-3.22.1.tgz#60330a81652d4950f1306ce14d38ae400ee1083e"
+  integrity sha512-Z6TII6thuMdWZHMaY2dfjggmFOei7tTFR3fOBCmCKue69GnLiueM4EBi0PAl5brIepSerB09A8F9IaMGXauRdw==
+
 "@tiptap/extension-ordered-list@^3.22.1":
   version "3.22.1"
   resolved "https://registry.yarnpkg.com/@tiptap/extension-ordered-list/-/extension-ordered-list-3.22.1.tgz#1bd882d741a2e34b25121dec52f772fef5242615"
@@ -2425,6 +2435,11 @@
     "@tiptap/extension-underline" "^3.22.1"
     "@tiptap/extensions" "^3.22.1"
     "@tiptap/pm" "^3.22.1"
+
+"@tiptap/suggestion@^3.22.1":
+  version "3.22.1"
+  resolved "https://registry.yarnpkg.com/@tiptap/suggestion/-/suggestion-3.22.1.tgz#b744100a982f2ba3150b7adb76dc3a29dbe50dc1"
+  integrity sha512-jNe8WcEQfPj8CkV4uh+gzINDOhjjOz3fEMFmhzDrZrlmwUscYl0NHgvle+LPncCGTy4QSLSK/lG0GP23UAPdqA==
 
 "@tokenizer/inflate@^0.4.1":
   version "0.4.1"
@@ -7874,6 +7889,13 @@ tinyglobby@^0.2.13, tinyglobby@^0.2.15:
   dependencies:
     fdir "^6.5.0"
     picomatch "^4.0.3"
+
+tippy.js@^6.3.7:
+  version "6.3.7"
+  resolved "https://registry.yarnpkg.com/tippy.js/-/tippy.js-6.3.7.tgz#8ccfb651d642010ed9a32ff29b0e9e19c5b8c61c"
+  integrity sha512-E1d3oP2emgJ9dRQZdf3Kkn0qJgI6ZLpyS5z6ZkY1DF3kaQaBsGZsndEpHwx+eC+tYM41HaSNvNtLx8tU57FzTQ==
+  dependencies:
+    "@popperjs/core" "^2.9.0"
 
 tmpl@1.0.5:
   version "1.0.5"

@@ -7,7 +7,6 @@ import { useAuthApi } from '@/core/hooks/useAuthApi';
 interface Customer {
     uuid: string;
     name: string;
-    site: string | null;
 }
 
 interface User {
@@ -44,6 +43,11 @@ export default function CustomerDetailPage() {
     const [inviteRole, setInviteRole] = useState('customer_editor');
     const [inviting, setInviting] = useState(false);
     const [error, setError] = useState('');
+
+    // Inline edit customer name
+    const [editing, setEditing] = useState(false);
+    const [editName, setEditName] = useState('');
+    const [saving, setSaving] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -98,24 +102,61 @@ export default function CustomerDetailPage() {
         return <p className="text-sm text-text-secondary">Loading...</p>;
     }
 
+    const handleSave = async () => {
+        if (!editName.trim()) return;
+        setSaving(true);
+        try {
+            const { data } = await api.patch(`/customers/${uuid}`, {
+                name: editName.trim(),
+            });
+            setCustomer(data);
+            setEditing(false);
+        } catch {
+            // keep editing on error
+        } finally {
+            setSaving(false);
+        }
+    };
+
     if (!customer) {
         return <p className="text-sm text-danger">Customer not found</p>;
     }
 
     return (
         <>
-            {/* Page Header */}
+            {/* Page Header with inline edit */}
             <div className="flex min-h-12 shrink-0 items-center justify-between gap-6">
-                <div className="flex flex-col gap-1">
+                {editing ? (
+                    <input
+                        autoFocus
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSave();
+                            if (e.key === 'Escape') setEditing(false);
+                        }}
+                        className="flex h-12 w-full max-w-md items-center rounded-xl bg-card-lv1 px-6 text-sm text-text-primary ring-1 ring-card-lv3 transition focus:ring-3 focus:brightness-120"
+                    />
+                ) : (
                     <h1 className="text-2xl font-semibold text-text-primary">
                         {customer.name}
                     </h1>
-                    {customer.site && (
-                        <p className="text-sm text-text-secondary">
-                            {customer.site}
-                        </p>
-                    )}
-                </div>
+                )}
+                <button
+                    onClick={() => {
+                        if (editing) {
+                            handleSave();
+                        } else {
+                            setEditName(customer.name);
+                            setEditing(true);
+                        }
+                    }}
+                    disabled={saving}
+                    className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl bg-card-lv2 px-5 py-2.5 text-sm font-semibold text-text-secondary ring-1 ring-card-lv3 transition hover:brightness-120 hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    {saving ? 'Saving...' : editing ? 'Save' : 'Edit'}
+                </button>
             </div>
 
             {/* Users Section */}

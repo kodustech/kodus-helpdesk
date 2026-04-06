@@ -15,6 +15,8 @@
             "**/react-dom",
             "**/react-dom/**",
             "**/@tiptap/**",
+            "**/tippy.js",
+            "**/tippy.js/**",
             "**/@dnd-kit/**"
         ]
     },

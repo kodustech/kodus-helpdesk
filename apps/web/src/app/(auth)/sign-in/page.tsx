@@ -26,7 +26,7 @@ export default function SignInPage() {
             if (result?.error) {
                 setError('Invalid email or password');
             } else {
-                router.push('/tickets');
+                router.push('/dashboard');
             }
         } catch {
             setError('An error occurred. Please try again.');

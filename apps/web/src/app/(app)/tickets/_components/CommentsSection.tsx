@@ -2,19 +2,24 @@
 
 import { useRef } from 'react';
 import { useComments, useCreateComment } from '@/core/hooks/useComments';
+import { useMentionableUsers } from '@/core/hooks/useTickets';
 import { CommentEditor, CommentEditorHandle } from './editor/CommentEditor';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Mention from '@tiptap/extension-mention';
 
 function ReadOnlyContent({ content }: { content: Record<string, any> }) {
     const editor = useEditor({
-        extensions: [StarterKit.configure({ paragraph: { HTMLAttributes: { class: 'm-0' } } })],
+        extensions: [
+            StarterKit.configure({ paragraph: { HTMLAttributes: { class: 'm-0' } } }),
+            Mention.configure({ HTMLAttributes: { class: 'mention' } }),
+        ],
         content,
         editable: false,
         immediatelyRender: false,
         editorProps: {
             attributes: {
-                class: 'prose prose-sm prose-invert max-w-none text-sm text-text-primary [&_code]:bg-card-lv3 [&_code]:text-primary-light [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-xs',
+                class: 'tiptap-editor text-sm',
             },
         },
     });
@@ -24,6 +29,7 @@ function ReadOnlyContent({ content }: { content: Record<string, any> }) {
 
 export function CommentsSection({ ticketUuid }: { ticketUuid: string }) {
     const { data: comments = [], isLoading } = useComments(ticketUuid);
+    const { data: mentionableUsers = [] } = useMentionableUsers(ticketUuid);
     const createComment = useCreateComment();
     const editorRef = useRef<CommentEditorHandle>(null);
 
@@ -31,8 +37,14 @@ export function CommentsSection({ ticketUuid }: { ticketUuid: string }) {
         if (!editorRef.current || editorRef.current.isEmpty()) return;
 
         const content = editorRef.current.getJSON();
+        const mentioned_user_ids = editorRef.current.getMentionedUserIds();
+
         try {
-            await createComment.mutateAsync({ ticketUuid, content });
+            await createComment.mutateAsync({
+                ticketUuid,
+                content,
+                mentioned_user_ids: mentioned_user_ids.length ? mentioned_user_ids : undefined,
+            });
             editorRef.current.clear();
         } catch {
             // error handled by UI
@@ -69,10 +81,14 @@ export function CommentsSection({ ticketUuid }: { ticketUuid: string }) {
 
             {/* New comment */}
             <div className="flex flex-col gap-2">
-                <CommentEditor ref={editorRef} onSubmit={handleSubmit} />
+                <CommentEditor
+                    ref={editorRef}
+                    onSubmit={handleSubmit}
+                    mentionableUsers={mentionableUsers}
+                />
                 <div className="flex items-center justify-between">
                     <span className="text-xs text-text-tertiary">
-                        Ctrl+Enter to submit
+                        Ctrl+Enter to submit &middot; Type @ to mention
                     </span>
                     <button
                         type="button"

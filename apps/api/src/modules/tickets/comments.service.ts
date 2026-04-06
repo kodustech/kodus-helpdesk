@@ -10,6 +10,8 @@ import { CommentMentionModel } from './entities/comment-mention.model';
 import { TicketModel } from './entities/ticket.model';
 import { UserModel } from '../users/entities/user.model';
 import { UserRole } from '../../config/enums';
+import { NotificationsService } from '../notifications/notifications.service';
+import { ActivitiesService } from './activities.service';
 
 const INTERNAL_ROLES = [UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR];
 
@@ -22,6 +24,8 @@ export class CommentsService {
         private readonly mentionRepository: Repository<CommentMentionModel>,
         @InjectRepository(TicketModel)
         private readonly ticketRepository: Repository<TicketModel>,
+        private readonly notificationsService: NotificationsService,
+        private readonly activitiesService: ActivitiesService,
     ) {}
 
     async create(
@@ -32,6 +36,7 @@ export class CommentsService {
     ): Promise<CommentModel> {
         const ticket = await this.ticketRepository.findOne({
             where: { uuid: ticketUuid },
+            relations: ['author', 'assignee'],
         });
         if (!ticket) {
             throw new NotFoundException('Ticket not found');
@@ -55,6 +60,14 @@ export class CommentsService {
             await this.mentionRepository.save(mentions);
         }
 
+        // Log activity
+        this.activitiesService.logCommentAdded(ticket, user).catch(() => {});
+
+        // Notify: new comment
+        this.notificationsService
+            .notifyNewComment(ticket, user, mentionedUserIds || [])
+            .catch(() => {});
+
         return this.findByUuid(saved.uuid);
     }
 
@@ -69,7 +82,7 @@ export class CommentsService {
     async findByUuid(uuid: string): Promise<CommentModel> {
         const comment = await this.commentRepository.findOne({
             where: { uuid },
-            relations: ['author', 'mentions', 'mentions.mentionedUser'],
+            relations: ['author', 'ticket', 'mentions', 'mentions.mentionedUser'],
         });
         if (!comment) {
             throw new NotFoundException('Comment not found');
@@ -122,6 +135,13 @@ export class CommentsService {
             throw new ForbiddenException(
                 'Only the author or management can delete this comment',
             );
+        }
+
+        // Log activity
+        if (comment.ticket) {
+            this.activitiesService
+                .logCommentDeleted(comment.ticket, user)
+                .catch(() => {});
         }
 
         await this.commentRepository.remove(comment);

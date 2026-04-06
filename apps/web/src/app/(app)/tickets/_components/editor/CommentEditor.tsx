@@ -1,28 +1,43 @@
 'use client';
 
-import { useRef, useImperativeHandle, forwardRef } from 'react';
+import { useRef, useImperativeHandle, forwardRef, useMemo } from 'react';
 import { Editor, EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import LinkExtension from '@tiptap/extension-link';
+import { createMentionExtension } from './MentionExtension';
+
+interface MentionUser {
+    uuid: string;
+    name: string;
+    email: string;
+    role: string;
+}
 
 export interface CommentEditorHandle {
     getJSON: () => Record<string, any>;
     clear: () => void;
     focus: () => void;
     isEmpty: () => boolean;
+    getMentionedUserIds: () => string[];
 }
 
 interface CommentEditorProps {
     placeholder?: string;
     className?: string;
     onSubmit?: () => void;
+    mentionableUsers?: MentionUser[];
 }
 
 export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>(
-    function CommentEditor({ placeholder = 'Write a comment...', className = '', onSubmit }, ref) {
+    function CommentEditor({ placeholder = 'Write a comment...', className = '', onSubmit, mentionableUsers = [] }, ref) {
         const onSubmitRef = useRef(onSubmit);
         onSubmitRef.current = onSubmit;
+
+        const mentionExtension = useMemo(
+            () => createMentionExtension(mentionableUsers),
+            [mentionableUsers],
+        );
 
         const editor = useEditor({
             extensions: [
@@ -35,18 +50,17 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
                     HTMLAttributes: { class: 'text-primary-light underline' },
                 }),
                 Placeholder.configure({ placeholder }),
+                mentionExtension,
             ],
             content: { type: 'doc', content: [{ type: 'paragraph' }] },
             immediatelyRender: false,
             editorProps: {
                 attributes: {
                     class: [
+                        'tiptap-editor',
                         'min-h-20 w-full rounded-xl px-4 py-3 text-sm ring-1 outline-hidden transition-all',
-                        'bg-card-lv1 ring-card-lv3 text-text-primary',
-                        'prose prose-sm prose-invert max-w-none',
+                        'bg-card-lv1 ring-card-lv3',
                         'focus-within:ring-primary-light/30 focus-within:ring-2 hover:brightness-120',
-                        '[&_code]:bg-card-lv3 [&_code]:text-primary-light [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-xs',
-                        '[&_.is-empty:first-child::before]:content-[attr(data-placeholder)] [&_.is-empty:first-child::before]:float-left [&_.is-empty:first-child::before]:text-text-placeholder/50 [&_.is-empty:first-child::before]:pointer-events-none [&_.is-empty:first-child::before]:h-0',
                         className,
                     ].join(' '),
                 },
@@ -69,6 +83,16 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
                 editor?.commands.focus();
             },
             isEmpty: () => editor?.isEmpty ?? true,
+            getMentionedUserIds: () => {
+                if (!editor) return [];
+                const ids: string[] = [];
+                editor.state.doc.descendants((node) => {
+                    if (node.type.name === 'mention' && node.attrs.id) {
+                        ids.push(node.attrs.id);
+                    }
+                });
+                return [...new Set(ids)];
+            },
         }));
 
         if (!editor) return null;

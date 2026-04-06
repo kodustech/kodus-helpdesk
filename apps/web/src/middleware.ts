@@ -13,7 +13,7 @@ export default auth((req) => {
     if (isPublicPath) {
         // If user is already authenticated and tries to access sign-in, redirect to dashboard
         if (pathname === '/sign-in' && req.auth) {
-            return NextResponse.redirect(new URL('/tickets', req.url));
+            return NextResponse.redirect(new URL('/dashboard', req.url));
         }
         return NextResponse.next();
     }

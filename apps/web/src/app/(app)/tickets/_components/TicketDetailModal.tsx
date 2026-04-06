@@ -6,6 +6,7 @@ import { useTicket, useUpdateTicket } from '@/core/hooks/useTickets';
 import { TicketDescriptionEditor } from './editor/TicketDescriptionEditor';
 import { TicketDetailSidebar } from './TicketDetailSidebar';
 import { CommentsSection } from './CommentsSection';
+import { HistoryTab } from './HistoryTab';
 import { X } from 'lucide-react';
 
 const CUSTOMER_ROLES = ['customer_owner', 'customer_admin', 'customer_editor'];
@@ -146,9 +147,7 @@ export function TicketDetailModal({ ticketUuid, onClose }: TicketDetailModalProp
                                 <CommentsSection ticketUuid={ticket.uuid} />
                             )}
                             {activeTab === 'history' && (
-                                <p className="text-sm text-text-tertiary">
-                                    Activity history coming soon.
-                                </p>
+                                <HistoryTab ticketUuid={ticket.uuid} />
                             )}
                         </div>
                     </div>

@@ -51,14 +51,12 @@ export function TicketDescriptionEditor({
         editorProps: {
             attributes: {
                 class: [
+                    'tiptap-editor',
                     'min-h-32 w-full rounded-xl px-6 py-4 text-sm ring-1 outline-hidden transition-all',
-                    'bg-card-lv1 ring-card-lv3 text-text-primary',
-                    'prose prose-sm prose-invert max-w-none',
+                    'bg-card-lv1 ring-card-lv3',
                     editable
                         ? 'focus-within:ring-primary-light/30 focus-within:ring-2 hover:brightness-120'
                         : 'opacity-80',
-                    '[&_code]:bg-card-lv3 [&_code]:text-primary-light [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-xs',
-                    '[&_.is-empty:first-child::before]:content-[attr(data-placeholder)] [&_.is-empty:first-child::before]:float-left [&_.is-empty:first-child::before]:text-text-placeholder/50 [&_.is-empty:first-child::before]:pointer-events-none [&_.is-empty:first-child::before]:h-0',
                     className,
                 ].join(' '),
             },

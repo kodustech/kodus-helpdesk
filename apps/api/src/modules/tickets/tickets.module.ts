@@ -5,7 +5,9 @@ import { LabelModel } from './entities/label.model';
 import { TicketLabelModel } from './entities/ticket-label.model';
 import { CommentModel } from './entities/comment.model';
 import { CommentMentionModel } from './entities/comment-mention.model';
+import { TicketActivityModel } from './entities/ticket-activity.model';
 import { TicketsService } from './tickets.service';
+import { ActivitiesService } from './activities.service';
 import { TicketsController } from './tickets.controller';
 import { LabelsService } from './labels.service';
 import { LabelsController } from './labels.controller';
@@ -24,13 +26,14 @@ import { NotificationsModule } from '../notifications/notifications.module';
             TicketLabelModel,
             CommentModel,
             CommentMentionModel,
+            TicketActivityModel,
             UserModel,
             EditorAssignmentModel,
             CustomerModel,
         ]),
         NotificationsModule,
     ],
-    providers: [TicketsService, LabelsService, CommentsService],
+    providers: [TicketsService, LabelsService, CommentsService, ActivitiesService],
     controllers: [TicketsController, LabelsController, CommentsController],
     exports: [TicketsService],
 })

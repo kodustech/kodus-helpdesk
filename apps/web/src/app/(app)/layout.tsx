@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
+import { NotificationBell } from './_components/NotificationBell';
 
 const NAV_ITEMS = [
+    { href: '/dashboard', label: 'Dashboard' },
     { href: '/tickets', label: 'Tickets' },
     { href: '/customers', label: 'Customers' },
     { href: '/users', label: 'Users' },
@@ -46,6 +48,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <div className="ml-auto flex items-center gap-4">
+                    <NotificationBell />
                     <span className="text-sm text-text-secondary">
                         {session?.user?.email}
                     </span>
@@ -61,7 +64,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {/* Page Content */}
             <div className="flex flex-1 flex-col relative w-full overflow-auto">
                 <div className="flex flex-col w-full flex-1 gap-6 pt-10 pb-16">
-                    <main className="mx-auto w-full max-w-7xl px-8">
+                    <main className="mx-auto w-full max-w-7xl px-8 flex flex-col gap-6">
                         {children}
                     </main>
                 </div>

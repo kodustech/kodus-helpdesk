@@ -95,7 +95,6 @@ export class AuthService {
         const authToken = await this.authTokenRepository.findOne({
             where: {
                 refreshToken: token,
-                used: false,
                 expiryDate: MoreThan(new Date()),
             },
             relations: ['user', 'user.customer'],
@@ -105,15 +104,34 @@ export class AuthService {
             throw new UnauthorizedException('Invalid or expired refresh token');
         }
 
-        // Mark current token as used
-        authToken.used = true;
-        await this.authTokenRepository.save(authToken);
-
         if (authToken.user.status !== UserStatus.ACTIVE) {
             throw new UnauthorizedException('User is not active');
         }
 
-        return this.login(authToken.user);
+        // Generate new access token but keep the same refresh token
+        // This avoids race conditions when multiple requests try to refresh simultaneously
+        const payload = {
+            uuid: authToken.user.uuid,
+            email: authToken.user.email,
+            role: authToken.user.role,
+            customerId: authToken.user.customer?.uuid || null,
+        };
+
+        const accessToken = this.jwtService.sign(payload, {
+            expiresIn: '15m',
+        });
+
+        return {
+            access_token: accessToken,
+            refresh_token: token, // return same refresh token
+            user: {
+                uuid: authToken.user.uuid,
+                email: authToken.user.email,
+                name: authToken.user.name,
+                role: authToken.user.role,
+                customerId: authToken.user.customer?.uuid || null,
+            },
+        };
     }
 
     async validateCloudToken(token: string) {

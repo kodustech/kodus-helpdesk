@@ -7,7 +7,6 @@ import { useAuthApi } from '@/core/hooks/useAuthApi';
 interface Customer {
     uuid: string;
     name: string;
-    site: string | null;
     createdAt: string;
 }
 
@@ -18,7 +17,6 @@ export default function CustomersPage() {
     const [showCreate, setShowCreate] = useState(false);
     const [form, setForm] = useState({
         name: '',
-        site: '',
         first_user_email: '',
     });
     const [creating, setCreating] = useState(false);
@@ -47,7 +45,7 @@ export default function CustomersPage() {
         try {
             await api.post('/customers', form);
             setShowCreate(false);
-            setForm({ name: '', site: '', first_user_email: '' });
+            setForm({ name: '', first_user_email: '' });
             fetchCustomers();
         } catch (err: any) {
             setError(
@@ -111,21 +109,6 @@ export default function CustomersPage() {
 
                             <div className="flex flex-col gap-1">
                                 <label className="text-sm font-medium text-text-primary select-none">
-                                    Website
-                                </label>
-                                <input
-                                    type="text"
-                                    value={form.site}
-                                    onChange={(e) =>
-                                        setForm({ ...form, site: e.target.value })
-                                    }
-                                    className="flex h-12 w-full items-center rounded-xl bg-card-lv1 px-6 text-sm text-text-primary ring-1 ring-card-lv3 transition placeholder:text-text-placeholder/50 hover:brightness-120 focus:ring-3 focus:brightness-120"
-                                    placeholder="https://company.com"
-                                />
-                            </div>
-
-                            <div className="flex flex-col gap-1">
-                                <label className="text-sm font-medium text-text-primary select-none">
                                     First User Email (Customer Owner) *
                                 </label>
                                 <input
@@ -181,16 +164,9 @@ export default function CustomersPage() {
                             href={`/customers/${customer.uuid}`}
                             className="flex items-center justify-between rounded-xl bg-card-lv2 p-5 shadow-sm ring-1 ring-card-lv3 transition hover:brightness-120"
                         >
-                            <div className="flex flex-col gap-1">
-                                <h3 className="text-sm font-semibold text-text-primary">
-                                    {customer.name}
-                                </h3>
-                                {customer.site && (
-                                    <p className="text-[13px] text-text-secondary">
-                                        {customer.site}
-                                    </p>
-                                )}
-                            </div>
+                            <h3 className="text-sm font-semibold text-text-primary">
+                                {customer.name}
+                            </h3>
                             <span className="text-[13px] text-text-tertiary">
                                 {new Date(customer.createdAt).toLocaleDateString()}
                             </span>
