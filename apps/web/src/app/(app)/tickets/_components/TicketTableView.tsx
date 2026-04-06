@@ -1,6 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
+import { formatDate } from '@/lib/utils/date';
 import { CategoryBadge } from './CategoryBadge';
 import { StatusBadge } from './StatusBadge';
 import { LabelBadge } from './LabelBadge';
@@ -103,7 +104,7 @@ export function TicketTableView({ tickets, onSelectTicket }: TicketTableViewProp
                                 </td>
                             )}
                             <td className="px-4 py-3 text-xs text-text-tertiary whitespace-nowrap">
-                                {new Date(ticket.createdAt).toLocaleDateString()}
+                                {formatDate(ticket.createdAt)}
                             </td>
                         </tr>
                     ))}

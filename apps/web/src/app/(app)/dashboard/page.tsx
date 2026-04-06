@@ -13,14 +13,14 @@ const STAT_CARDS = [
     {
         key: 'open',
         label: 'Open',
-        color: '#5190ff',
+        color: '#dc4e58',
         icon: TicketPlus,
         description: 'Tickets waiting for attention',
     },
     {
         key: 'in_progress',
         label: 'In Progress',
-        color: '#f2c631',
+        color: '#f59220',
         icon: Clock,
         description: 'Tickets being worked on',
     },
@@ -35,7 +35,7 @@ const STAT_CARDS = [
     {
         key: 'total',
         label: 'Total',
-        color: '#f8b76d',
+        color: '#674982',
         icon: BarChart3,
         description: 'All tickets',
     },

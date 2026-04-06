@@ -34,9 +34,13 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
         const onSubmitRef = useRef(onSubmit);
         onSubmitRef.current = onSubmit;
 
+        // Use ref so the suggestion reads the latest users without recreating the editor
+        const usersRef = useRef(mentionableUsers);
+        usersRef.current = mentionableUsers;
+
         const mentionExtension = useMemo(
-            () => createMentionExtension(mentionableUsers),
-            [mentionableUsers],
+            () => createMentionExtension(usersRef),
+            [],
         );
 
         const editor = useEditor({

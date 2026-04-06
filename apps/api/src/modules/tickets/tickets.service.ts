@@ -12,7 +12,7 @@ import { LabelModel } from './entities/label.model';
 import { UserModel } from '../users/entities/user.model';
 import { EditorAssignmentModel } from '../users/entities/editor-assignment.model';
 import { CustomerModel } from '../customers/entities/customer.model';
-import { UserRole, TicketStatus } from '../../config/enums';
+import { UserRole, UserStatus, TicketStatus } from '../../config/enums';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ActivitiesService } from './activities.service';
 
@@ -407,23 +407,25 @@ export class TicketsService {
         let users: UserModel[];
 
         if (CUSTOMER_ROLES.includes(user.role)) {
-            // Client can mention: their customer team + all management users
+            // Client can mention: their customer team (active) + all management users (active)
             const customerTeam = await this.userRepository.find({
-                where: { customer: { uuid: customerUuid } },
+                where: { customer: { uuid: customerUuid }, status: UserStatus.ACTIVE },
             });
             const managementTeam = await this.userRepository
                 .createQueryBuilder('user')
                 .where('user.role IN (:...roles)', { roles: INTERNAL_ROLES })
+                .andWhere('user.status = :status', { status: UserStatus.ACTIVE })
                 .getMany();
             users = [...customerTeam, ...managementTeam];
         } else {
-            // Management can mention: management team + customer's team
+            // Management can mention: management team (active) + this ticket's customer team (active)
             const managementTeam = await this.userRepository
                 .createQueryBuilder('user')
                 .where('user.role IN (:...roles)', { roles: INTERNAL_ROLES })
+                .andWhere('user.status = :status', { status: UserStatus.ACTIVE })
                 .getMany();
             const customerTeam = await this.userRepository.find({
-                where: { customer: { uuid: customerUuid } },
+                where: { customer: { uuid: customerUuid }, status: UserStatus.ACTIVE },
             });
             users = [...managementTeam, ...customerTeam];
         }

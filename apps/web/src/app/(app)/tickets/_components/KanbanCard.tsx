@@ -1,6 +1,7 @@
 'use client';
 
 import { useDraggable } from '@dnd-kit/core';
+import { formatDate } from '@/lib/utils/date';
 import { CategoryBadge } from './CategoryBadge';
 import { LabelBadge } from './LabelBadge';
 
@@ -57,9 +58,8 @@ export function KanbanCard({ ticket, onSelect }: KanbanCardProps) {
             )}
 
             {/* Footer */}
-            <div className="flex items-center justify-between text-xs text-text-tertiary">
-                <span>{ticket.author?.name || ticket.author?.email || '—'}</span>
-                <span>{new Date(ticket.createdAt).toLocaleDateString()}</span>
+            <div className="flex items-center justify-end text-xs text-text-tertiary">
+                <span>{formatDate(ticket.createdAt)}</span>
             </div>
 
             {/* Assignee */}

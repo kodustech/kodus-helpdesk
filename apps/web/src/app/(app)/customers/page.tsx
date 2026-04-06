@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { formatDate } from '@/lib/utils/date';
 import { useAuthApi } from '@/core/hooks/useAuthApi';
 
 interface Customer {
@@ -168,7 +169,7 @@ export default function CustomersPage() {
                                 {customer.name}
                             </h3>
                             <span className="text-[13px] text-text-tertiary">
-                                {new Date(customer.createdAt).toLocaleDateString()}
+                                {formatDate(customer.createdAt)}
                             </span>
                         </Link>
                     ))}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import { formatDate } from '@/lib/utils/date';
 import { useComments, useCreateComment } from '@/core/hooks/useComments';
 import { useMentionableUsers } from '@/core/hooks/useTickets';
 import { CommentEditor, CommentEditorHandle } from './editor/CommentEditor';
@@ -71,7 +72,7 @@ export function CommentsSection({ ticketUuid }: { ticketUuid: string }) {
                                 {comment.author?.name || comment.author?.email || 'Unknown'}
                             </span>
                             <span className="text-xs text-text-tertiary">
-                                {new Date(comment.createdAt).toLocaleString()}
+                                {formatDate(comment.createdAt)}
                             </span>
                         </div>
                         <ReadOnlyContent content={comment.content} />

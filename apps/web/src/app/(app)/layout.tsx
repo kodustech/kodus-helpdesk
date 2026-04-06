@@ -5,10 +5,12 @@ import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { NotificationBell } from './_components/NotificationBell';
 
+const CUSTOMER_ROLES = ['customer_owner', 'customer_admin', 'customer_editor'];
+
 const NAV_ITEMS = [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/tickets', label: 'Tickets' },
-    { href: '/customers', label: 'Customers' },
+    { href: '/customers', label: 'Customers', managementOnly: true },
     { href: '/users', label: 'Users' },
     { href: '/settings', label: 'Settings' },
 ];
@@ -16,6 +18,8 @@ const NAV_ITEMS = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const { data: session } = useSession();
+    const role = session?.user?.role || '';
+    const isCustomer = CUSTOMER_ROLES.includes(role);
 
     return (
         <div className="flex h-full w-full flex-col overflow-hidden">
@@ -29,7 +33,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Link>
 
                 <div className="flex h-full items-center gap-0 ml-4">
-                    {NAV_ITEMS.map((item) => {
+                    {NAV_ITEMS.filter((item) => !item.managementOnly || !isCustomer).map((item) => {
                         const isActive = pathname.startsWith(item.href);
                         return (
                             <Link

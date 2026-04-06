@@ -12,13 +12,20 @@ interface MentionUser {
     role: string;
 }
 
-export function createMentionExtension(users: MentionUser[]) {
+/**
+ * Creates a mention extension that reads users from a ref.
+ * This way the user list can be updated without recreating the editor.
+ */
+export function createMentionExtension(
+    usersRef: React.RefObject<MentionUser[]>,
+) {
     return Mention.configure({
         HTMLAttributes: {
             class: 'mention',
         },
         suggestion: {
             items: ({ query }: { query: string }) => {
+                const users = usersRef.current || [];
                 return users
                     .filter(
                         (user) =>
@@ -67,7 +74,9 @@ export function createMentionExtension(users: MentionUser[]) {
                             popup?.[0]?.hide();
                             return true;
                         }
-                        return (component?.ref as any)?.onKeyDown(props) ?? false;
+                        return (
+                            (component?.ref as any)?.onKeyDown(props) ?? false
+                        );
                     },
                     onExit: () => {
                         popup?.[0]?.destroy();

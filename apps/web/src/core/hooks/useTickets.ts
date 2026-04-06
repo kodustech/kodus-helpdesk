@@ -81,6 +81,7 @@ export function useUpdateTicket() {
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['tickets'] });
             queryClient.invalidateQueries({ queryKey: ['ticket', variables.uuid] });
+            queryClient.invalidateQueries({ queryKey: ['activities', variables.uuid] });
         },
     });
 }

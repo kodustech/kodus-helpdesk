@@ -5,16 +5,17 @@ import { useSession } from 'next-auth/react';
 import { useAuthApi } from '@/core/hooks/useAuthApi';
 import { useQuery } from '@tanstack/react-query';
 import {
+    useUpdateTicket,
     useUpdateTicketStatus,
     useUpdateTicketAssignee,
     useAddTicketLabels,
     useRemoveTicketLabel,
 } from '@/core/hooks/useTickets';
 import { useLabels, useCreateLabel } from '@/core/hooks/useLabels';
-import { CategoryBadge } from './CategoryBadge';
+import { formatDate } from '@/lib/utils/date';
 import { StatusBadge } from './StatusBadge';
 import { LabelBadge } from './LabelBadge';
-import { STATUS_CONFIG, LABEL_COLORS } from './constants';
+import { STATUS_CONFIG, CATEGORY_CONFIG, LABEL_COLORS } from './constants';
 
 const CUSTOMER_ROLES = ['customer_owner', 'customer_admin', 'customer_editor'];
 const MANAGEMENT_ROLES = ['owner', 'admin', 'editor'];
@@ -25,6 +26,7 @@ export function TicketDetailSidebar({ ticket }: { ticket: any }) {
     const isManagement = MANAGEMENT_ROLES.includes(role);
 
     const { api } = useAuthApi();
+    const updateTicket = useUpdateTicket();
     const updateStatus = useUpdateTicketStatus();
     const updateAssignee = useUpdateTicketAssignee();
     const addLabels = useAddTicketLabels();
@@ -82,7 +84,7 @@ export function TicketDetailSidebar({ ticket }: { ticket: any }) {
                             status: e.target.value,
                         })
                     }
-                    className="flex h-9 w-full items-center rounded-lg bg-card-lv1 px-3 text-sm text-text-primary ring-1 ring-card-lv3"
+                    className="flex h-9 w-full items-center rounded-lg bg-card-lv1 pl-3 pr-8 text-sm text-text-primary ring-1 ring-card-lv3"
                 >
                     {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
                         <option key={key} value={key}>
@@ -97,7 +99,22 @@ export function TicketDetailSidebar({ ticket }: { ticket: any }) {
                 <span className="text-xs font-medium text-text-tertiary uppercase tracking-wider">
                     Category
                 </span>
-                <CategoryBadge category={ticket.category} />
+                <select
+                    value={ticket.category}
+                    onChange={(e) =>
+                        updateTicket.mutate({
+                            uuid: ticket.uuid,
+                            category: e.target.value,
+                        })
+                    }
+                    className="flex h-9 w-full items-center rounded-lg bg-card-lv1 pl-3 pr-8 text-sm text-text-primary ring-1 ring-card-lv3"
+                >
+                    {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (
+                        <option key={key} value={key}>
+                            {cfg.label}
+                        </option>
+                    ))}
+                </select>
             </div>
 
             {/* Assignee (management only) */}
@@ -116,7 +133,7 @@ export function TicketDetailSidebar({ ticket }: { ticket: any }) {
                                 });
                             }
                         }}
-                        className="flex h-9 w-full items-center rounded-lg bg-card-lv1 px-3 text-sm text-text-primary ring-1 ring-card-lv3"
+                        className="flex h-9 w-full items-center rounded-lg bg-card-lv1 pl-3 pr-8 text-sm text-text-primary ring-1 ring-card-lv3"
                     >
                         <option value="">Unassigned</option>
                         {managementUsers.map((u: any) => (
@@ -260,7 +277,7 @@ export function TicketDetailSidebar({ ticket }: { ticket: any }) {
                         Created
                     </span>
                     <span className="text-sm text-text-primary">
-                        {new Date(ticket.createdAt).toLocaleString()}
+                        {formatDate(ticket.createdAt)}
                     </span>
                 </div>
             </div>

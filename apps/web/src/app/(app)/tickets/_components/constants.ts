@@ -5,10 +5,10 @@ export const CATEGORY_CONFIG = {
 } as const;
 
 export const STATUS_CONFIG = {
-    open: { color: '#5190ff', label: 'Open' },
-    in_progress: { color: '#f2c631', label: 'In Progress' },
+    open: { color: '#dc4e58', label: 'Open' },
+    in_progress: { color: '#f59220', label: 'In Progress' },
     resolved: { color: '#42be65', label: 'Resolved' },
-    closed: { color: '#cdcddf', label: 'Closed' },
+    closed: { color: '#674982', label: 'Closed' },
 } as const;
 
 export const LABEL_COLORS = [

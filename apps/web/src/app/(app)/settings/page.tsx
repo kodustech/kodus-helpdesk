@@ -5,24 +5,8 @@ import { useAuthApi } from '@/core/hooks/useAuthApi';
 import { useSession } from 'next-auth/react';
 
 const COMMON_TIMEZONES = [
-    'UTC',
     'America/New_York',
-    'America/Chicago',
-    'America/Denver',
-    'America/Los_Angeles',
     'America/Sao_Paulo',
-    'America/Argentina/Buenos_Aires',
-    'Europe/London',
-    'Europe/Paris',
-    'Europe/Berlin',
-    'Europe/Madrid',
-    'Europe/Lisbon',
-    'Asia/Tokyo',
-    'Asia/Shanghai',
-    'Asia/Kolkata',
-    'Asia/Dubai',
-    'Australia/Sydney',
-    'Pacific/Auckland',
 ];
 
 const PASSWORD_RULES = [
@@ -108,16 +92,16 @@ export default function SettingsPage() {
     };
 
     return (
-        <>
+        <div className="flex flex-1 flex-col items-center justify-center gap-6">
             {/* Page Header */}
-            <div className="flex min-h-12 shrink-0 items-center gap-6">
+            <div className="flex w-full max-w-xl min-h-12 shrink-0 items-center gap-6">
                 <h1 className="text-2xl font-semibold text-text-primary">
                     Settings
                 </h1>
             </div>
 
             {/* Timezone Card */}
-            <div className="flex max-w-lg flex-col overflow-hidden rounded-xl bg-card-lv2 shadow-sm ring-1 ring-card-lv3">
+            <div className="flex w-full max-w-xl flex-col overflow-hidden rounded-xl bg-card-lv2 shadow-sm ring-1 ring-card-lv3">
                 <div className="flex flex-col gap-y-1.5 p-6">
                     <h2 className="text-lg font-bold leading-none text-text-primary">
                         Timezone
@@ -146,7 +130,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Change Password Card */}
-            <div className="flex max-w-lg flex-col overflow-hidden rounded-xl bg-card-lv2 shadow-sm ring-1 ring-card-lv3">
+            <div className="flex w-full max-w-xl flex-col overflow-hidden rounded-xl bg-card-lv2 shadow-sm ring-1 ring-card-lv3">
                 <div className="flex flex-col gap-y-1.5 p-6">
                     <h2 className="text-lg font-bold leading-none text-text-primary">
                         Change Password
@@ -238,6 +222,6 @@ export default function SettingsPage() {
                     </button>
                 </form>
             </div>
-        </>
+        </div>
     );
 }
