@@ -1,0 +1,5 @@
+- [Kodus Company](project_kodus_company.md) — Kodus is an AI code review tool; this helpdesk is for their enterprise clients
+- [Roles & Permissions](project_roles_permissions.md) — 6 roles (owner, admin, editor, customer-owner, customer-admin, customer-editor) with detailed permission rules
+- [Auth & Invite Flow](project_auth_invite.md) — Invite-based registration, seed owner account, role assignment rules
+- [Customer Workspaces](project_customer_workspaces.md) — Workspace model, creation, assignment, and constraints
+- [Ticket Lifecycle](project_ticket_lifecycle.md) — Ticket statuses and who can do what with tickets
