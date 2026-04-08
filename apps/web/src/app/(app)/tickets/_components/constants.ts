@@ -12,9 +12,12 @@ export const STATUS_CONFIG = {
 } as const;
 
 export const LABEL_COLORS = [
-    '#dc4e58', '#f59220', '#f2c631', '#42be65',
-    '#5190ff', '#674982', '#f8b76d', '#fdbfbf',
-    '#c9bbf2', '#ff8b40', '#cdcddf', '#30304b',
+    // Normal
+    '#dc4e58', '#f59220', '#f2c631', '#42be65', '#5190ff', '#674982', '#e54d8a',
+    // Pastel
+    '#f4a6ab', '#fac89a', '#f7e08a', '#a3dbb5', '#a3c8ff', '#b6a0cb', '#f2a3c4',
+    // White
+    '#ffffff',
 ];
 
 export const STATUS_ORDER = ['open', 'in_progress', 'resolved', 'closed'] as const;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { useAuthApi } from '@/core/hooks/useAuthApi';
 
 interface User {
@@ -28,7 +29,11 @@ const STATUS_STYLES: Record<string, string> = {
     removed: 'bg-danger/10 text-danger',
 };
 
+const CUSTOMER_ROLES = ['customer_owner', 'customer_admin', 'customer_editor'];
+
 export default function UsersPage() {
+    const { data: session } = useSession();
+    const isCustomer = CUSTOMER_ROLES.includes(session?.user?.role || '');
     const { api, isReady } = useAuthApi();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
@@ -178,7 +183,9 @@ export default function UsersPage() {
                                 <th className="px-6 py-3 text-left text-[13px] font-medium text-text-secondary">Name</th>
                                 <th className="px-6 py-3 text-left text-[13px] font-medium text-text-secondary">Role</th>
                                 <th className="px-6 py-3 text-left text-[13px] font-medium text-text-secondary">Status</th>
-                                <th className="px-6 py-3 text-left text-[13px] font-medium text-text-secondary">Customer</th>
+                                {!isCustomer && (
+                                    <th className="px-6 py-3 text-left text-[13px] font-medium text-text-secondary">Customer</th>
+                                )}
                             </tr>
                         </thead>
                         <tbody>
@@ -196,9 +203,11 @@ export default function UsersPage() {
                                             {user.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-text-secondary">
-                                        {user.customer?.name || '—'}
-                                    </td>
+                                    {!isCustomer && (
+                                        <td className="px-6 py-4 text-sm text-text-secondary">
+                                            {user.customer?.name || '—'}
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>

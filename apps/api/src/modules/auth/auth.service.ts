@@ -148,9 +148,9 @@ export class AuthService {
             throw new UnauthorizedException('Invalid cloud token');
         }
 
-        // Find helpdesk user by external UUID
+        // Find helpdesk user by external UUID (kodus-ai JWT uses 'sub' for user UUID)
         const user = await this.userRepository.findOne({
-            where: { externalUserUuid: payload.uuid },
+            where: { externalUserUuid: payload.sub },
             relations: ['customer'],
         });
 

@@ -29,15 +29,19 @@ const nextConfig: NextConfig = {
         WEB_NODE_ENV: process.env.WEB_NODE_ENV,
         WEB_HOSTNAME_API: process.env.WEB_HOSTNAME_API,
         NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003',
+        NEXT_PUBLIC_ALLOWED_PARENT_ORIGINS: process.env.ALLOWED_PARENT_ORIGINS || 'http://localhost:3000 https://app.kodus.io',
     },
     async headers() {
+        const allowedOrigins = (process.env.ALLOWED_PARENT_ORIGINS || 'http://localhost:3000 https://app.kodus.io').split(' ');
+        const frameAncestors = `frame-ancestors 'self' ${allowedOrigins.join(' ')}`;
+
         return [
             {
                 source: '/(.*)',
                 headers: [
                     {
-                        key: 'X-Frame-Options',
-                        value: 'DENY',
+                        key: 'Content-Security-Policy',
+                        value: frameAncestors,
                     },
                     {
                         key: 'X-Content-Type-Options',
