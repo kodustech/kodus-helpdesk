@@ -1,4 +1,4 @@
-import { auth } from './lib/auth/auth';
+import { auth } from '@/lib/auth/auth';
 import { NextResponse } from 'next/server';
 
 const publicPaths = ['/sign-in', '/invite', '/api/auth', '/auth/cloud'];
