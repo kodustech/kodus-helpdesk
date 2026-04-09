@@ -9,6 +9,7 @@ import { CustomersModule } from './modules/customers/customers.module';
 import { MailModule } from './modules/mail/mail.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { GitHubModule } from './modules/github/github.module';
 
 @Module({
     imports: [
@@ -28,6 +29,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
         MailModule,
         TicketsModule,
         NotificationsModule,
+        GitHubModule,
     ],
 })
 export class ApiModule {}
