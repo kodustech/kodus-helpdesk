@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NotificationBell } from './_components/NotificationBell';
 
 const CUSTOMER_ROLES = ['customer_owner', 'customer_admin', 'customer_editor'];
@@ -15,6 +15,73 @@ const NAV_ITEMS = [
     { href: '/users', label: 'Users' },
     { href: '/settings', label: 'Settings' },
 ];
+
+function UserMenu({ email }: { email?: string | null }) {
+    const [open, setOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    return (
+        <div className="relative" ref={menuRef}>
+            <button
+                onClick={() => setOpen(!open)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-card-lv2 ring-1 ring-card-lv3 transition hover:brightness-120"
+            >
+                <svg
+                    className="h-5 w-5 text-text-secondary"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                    />
+                </svg>
+            </button>
+
+            {open && (
+                <div className="absolute right-0 top-full mt-2 w-60 rounded-xl bg-card-lv2 ring-1 ring-card-lv3 shadow-lg z-50">
+                    <div className="border-b border-card-lv3 px-4 py-3">
+                        <p className="text-sm text-text-secondary truncate">
+                            {email}
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => signOut({ callbackUrl: '/sign-in' })}
+                        className="flex w-full items-center gap-2 px-4 py-3 text-sm text-text-secondary transition hover:text-white hover:bg-card-lv3 rounded-b-xl"
+                    >
+                        <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
+                            />
+                        </svg>
+                        Sign out
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
 
 function useIsIframe() {
     const [isIframe, setIsIframe] = useState(false);
@@ -109,15 +176,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
                     <div className="ml-auto flex items-center gap-4">
                         <NotificationBell />
-                        <span className="text-sm text-text-secondary">
-                            {session?.user?.email}
-                        </span>
-                        <button
-                            onClick={() => signOut({ callbackUrl: '/sign-in' })}
-                            className="inline-flex items-center rounded-xl bg-card-lv2 px-4 py-2 text-sm text-text-secondary ring-1 ring-card-lv3 transition hover:brightness-120 hover:text-text-primary"
-                        >
-                            Sign out
-                        </button>
+                        <UserMenu email={session?.user?.email} />
                     </div>
                 </nav>
             )}
