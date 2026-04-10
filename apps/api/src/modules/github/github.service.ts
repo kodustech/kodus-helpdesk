@@ -12,6 +12,12 @@ export class GitHubService {
 
     constructor(private readonly configService: ConfigService) {
         const token = this.configService.get<string>('GITHUB_TOKEN');
+        if (!token) {
+            throw new Error(
+                'GITHUB_TOKEN environment variable is not configured. Please set it in your .env file.',
+            );
+        }
+
         this.organization = this.configService.get<string>(
             'GITHUB_ORG',
             'kodustech',
