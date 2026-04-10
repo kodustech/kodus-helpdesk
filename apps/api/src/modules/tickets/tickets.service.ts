@@ -398,8 +398,11 @@ export class TicketsService {
                 .notifyStatusChange(updated, oldStatus, status, user)
                 .catch(() => {});
 
-            // Sync to GitHub when moved to In Progress
-            if (status === TicketStatus.IN_PROGRESS) {
+            // Sync to GitHub only when moving from Open to In Progress
+            if (
+                status === TicketStatus.IN_PROGRESS &&
+                oldStatus === TicketStatus.OPEN
+            ) {
                 const categoryLabel =
                     updated.category?.toLowerCase() || 'ticket';
                 this.githubService
