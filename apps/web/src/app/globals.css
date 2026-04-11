@@ -200,7 +200,11 @@ body {
 /* TipTap Mention styles */
 .tiptap-editor .mention,
 .mention {
-    background-color: color-mix(in srgb, var(--color-primary-light) 15%, transparent);
+    background-color: color-mix(
+        in srgb,
+        var(--color-primary-light) 15%,
+        transparent
+    );
     color: var(--color-primary-light);
     border-radius: 4px;
     padding: 1px 4px;
@@ -224,4 +228,20 @@ input:-webkit-autofill:focus {
     -webkit-box-shadow: 0 0 0px 1000px var(--color-card-lv2) inset;
     -webkit-text-fill-color: var(--color-text-primary);
     transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Toast animation */
+@keyframes slide-up {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-up {
+    animation: slide-up 0.3s ease-out;
 }
