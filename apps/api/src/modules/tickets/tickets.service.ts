@@ -3,18 +3,22 @@ import {
     NotFoundException,
     ForbiddenException,
     BadRequestException,
+    Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { TicketModel } from './entities/ticket.model';
 import { TicketLabelModel } from './entities/ticket-label.model';
 import { LabelModel } from './entities/label.model';
+import { CommentModel } from './entities/comment.model';
 import { UserModel } from '../users/entities/user.model';
 import { EditorAssignmentModel } from '../users/entities/editor-assignment.model';
 import { CustomerModel } from '../customers/entities/customer.model';
 import { UserRole, UserStatus, TicketStatus } from '../../config/enums';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ActivitiesService } from './activities.service';
+import { GitHubService } from '../github/github.service';
+import { TicketCategory } from '../../config/enums';
 
 const INTERNAL_ROLES = [UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR];
 const CUSTOMER_ROLES = [
@@ -25,6 +29,8 @@ const CUSTOMER_ROLES = [
 
 @Injectable()
 export class TicketsService {
+    private readonly logger = new Logger(TicketsService.name);
+
     constructor(
         @InjectRepository(TicketModel)
         private readonly ticketRepository: Repository<TicketModel>,
@@ -32,6 +38,8 @@ export class TicketsService {
         private readonly ticketLabelRepository: Repository<TicketLabelModel>,
         @InjectRepository(LabelModel)
         private readonly labelRepository: Repository<LabelModel>,
+        @InjectRepository(CommentModel)
+        private readonly commentRepository: Repository<CommentModel>,
         @InjectRepository(UserModel)
         private readonly userRepository: Repository<UserModel>,
         @InjectRepository(EditorAssignmentModel)
@@ -40,6 +48,7 @@ export class TicketsService {
         private readonly customerRepository: Repository<CustomerModel>,
         private readonly notificationsService: NotificationsService,
         private readonly activitiesService: ActivitiesService,
+        private readonly githubService: GitHubService,
     ) {}
 
     async create(
@@ -54,24 +63,31 @@ export class TicketsService {
 
         if (CUSTOMER_ROLES.includes(user.role)) {
             if (!user.customer) {
-                throw new BadRequestException('Customer user has no associated customer');
+                throw new BadRequestException(
+                    'Customer user has no associated customer',
+                );
             }
             customerUuid = user.customer.uuid;
             createdBySide = 'client';
         } else {
             if (!customerId) {
-                throw new BadRequestException('customer_id is required for management users');
+                throw new BadRequestException(
+                    'customer_id is required for management users',
+                );
             }
 
             if (user.role === UserRole.EDITOR) {
-                const assignment = await this.editorAssignmentRepository.findOne({
-                    where: {
-                        user: { uuid: user.uuid },
-                        customer: { uuid: customerId },
-                    },
-                });
+                const assignment =
+                    await this.editorAssignmentRepository.findOne({
+                        where: {
+                            user: { uuid: user.uuid },
+                            customer: { uuid: customerId },
+                        },
+                    });
                 if (!assignment) {
-                    throw new ForbiddenException('You are not assigned to this customer');
+                    throw new ForbiddenException(
+                        'You are not assigned to this customer',
+                    );
                 }
             }
 
@@ -100,7 +116,9 @@ export class TicketsService {
         const fullTicket = await this.findByUuid(saved.uuid);
 
         // Log activity
-        this.activitiesService.logTicketOpened(fullTicket, user).catch(() => {});
+        this.activitiesService
+            .logTicketOpened(fullTicket, user)
+            .catch(() => {});
 
         // Notify: new ticket from client → all management users
         if (createdBySide === 'client') {
@@ -127,9 +145,17 @@ export class TicketsService {
         // Role-based filtering (same as findAll)
         if (CUSTOMER_ROLES.includes(user.role)) {
             if (!user.customer) {
-                return { open: 0, in_progress: 0, resolved: 0, closed: 0, total: 0 };
+                return {
+                    open: 0,
+                    in_progress: 0,
+                    resolved: 0,
+                    closed: 0,
+                    total: 0,
+                };
             }
-            qb.where('ticket.customer_id = :custId', { custId: user.customer.uuid });
+            qb.where('ticket.customer_id = :custId', {
+                custId: user.customer.uuid,
+            });
         } else if (user.role === UserRole.EDITOR) {
             const assignments = await this.editorAssignmentRepository.find({
                 where: { user: { uuid: user.uuid } },
@@ -137,15 +163,29 @@ export class TicketsService {
             });
             const customerIds = assignments.map((a) => a.customer.uuid);
             if (customerIds.length === 0) {
-                return { open: 0, in_progress: 0, resolved: 0, closed: 0, total: 0 };
+                return {
+                    open: 0,
+                    in_progress: 0,
+                    resolved: 0,
+                    closed: 0,
+                    total: 0,
+                };
             }
-            qb.where('ticket.customer_id IN (:...customerIds)', { customerIds });
+            qb.where('ticket.customer_id IN (:...customerIds)', {
+                customerIds,
+            });
         }
 
         qb.groupBy('ticket.status');
 
         const results = await qb.getRawMany();
-        const stats = { open: 0, in_progress: 0, resolved: 0, closed: 0, total: 0 };
+        const stats = {
+            open: 0,
+            in_progress: 0,
+            resolved: 0,
+            closed: 0,
+            total: 0,
+        };
 
         for (const row of results) {
             const count = parseInt(row.count, 10);
@@ -178,7 +218,9 @@ export class TicketsService {
         // Role-based filtering
         if (CUSTOMER_ROLES.includes(user.role)) {
             if (!user.customer) return [];
-            qb.andWhere('ticket.customer = :custId', { custId: user.customer.uuid });
+            qb.andWhere('ticket.customer = :custId', {
+                custId: user.customer.uuid,
+            });
         } else if (user.role === UserRole.EDITOR) {
             const assignments = await this.editorAssignmentRepository.find({
                 where: { user: { uuid: user.uuid } },
@@ -186,7 +228,9 @@ export class TicketsService {
             });
             const customerIds = assignments.map((a) => a.customer.uuid);
             if (customerIds.length === 0) return [];
-            qb.andWhere('ticket.customer IN (:...customerIds)', { customerIds });
+            qb.andWhere('ticket.customer IN (:...customerIds)', {
+                customerIds,
+            });
         }
         // Owner/Admin see all
 
@@ -196,13 +240,19 @@ export class TicketsService {
             qb.andWhere('ticket.status IN (:...statuses)', { statuses });
         }
         if (filters?.customer_id) {
-            qb.andWhere('ticket.customer = :filtCustId', { filtCustId: filters.customer_id });
+            qb.andWhere('ticket.customer = :filtCustId', {
+                filtCustId: filters.customer_id,
+            });
         }
         if (filters?.assignee_id) {
-            qb.andWhere('ticket.assignee = :filtAssId', { filtAssId: filters.assignee_id });
+            qb.andWhere('ticket.assignee = :filtAssId', {
+                filtAssId: filters.assignee_id,
+            });
         }
         if (filters?.category) {
-            qb.andWhere('ticket.category = :filtCat', { filtCat: filters.category });
+            qb.andWhere('ticket.category = :filtCat', {
+                filtCat: filters.category,
+            });
         }
 
         // Sort: open/in_progress first (by createdAt DESC), then resolved/closed
@@ -236,7 +286,11 @@ export class TicketsService {
 
     async update(
         uuid: string,
-        data: { title?: string; description?: Record<string, any>; category?: string },
+        data: {
+            title?: string;
+            description?: Record<string, any>;
+            category?: string;
+        },
         user: UserModel,
     ): Promise<TicketModel> {
         const ticket = await this.findByUuid(uuid);
@@ -268,7 +322,12 @@ export class TicketsService {
         }
         if (data.category && data.category !== ticket.category) {
             this.activitiesService
-                .logCategoryChanged(ticket, ticket.category, data.category, user)
+                .logCategoryChanged(
+                    ticket,
+                    ticket.category,
+                    data.category,
+                    user,
+                )
                 .catch(() => {});
         }
 
@@ -286,6 +345,43 @@ export class TicketsService {
         user: UserModel,
     ): Promise<TicketModel> {
         const ticket = await this.findByUuid(uuid);
+
+        // Block moving from IN_PROGRESS back to OPEN
+        if (
+            ticket.status === TicketStatus.IN_PROGRESS &&
+            status === TicketStatus.OPEN
+        ) {
+            throw new BadRequestException(
+                'Cannot move ticket back to Open once it has been moved to In Progress',
+            );
+        }
+
+        // Se estiver tentando mover para in_progress, verificar se tem comentário de funcionário
+        if (
+            status === TicketStatus.IN_PROGRESS &&
+            ticket.status === TicketStatus.OPEN
+        ) {
+            const isInternal = INTERNAL_ROLES.includes(user.role);
+
+            if (isInternal) {
+                // Verificar se existe pelo menos um comentário de funcionário
+                const comments = await this.commentRepository.find({
+                    where: { ticket: { uuid } },
+                    relations: ['author'],
+                });
+
+                const hasInternalComment = comments.some((comment) =>
+                    INTERNAL_ROLES.includes(comment.author.role),
+                );
+
+                if (!hasInternalComment) {
+                    throw new BadRequestException(
+                        'Cannot move ticket to In Progress without at least one internal comment',
+                    );
+                }
+            }
+        }
+
         const oldStatus = ticket.status;
         ticket.status = status;
         await this.ticketRepository.save(ticket);
@@ -301,6 +397,22 @@ export class TicketsService {
             this.notificationsService
                 .notifyStatusChange(updated, oldStatus, status, user)
                 .catch(() => {});
+
+            // Sync to GitHub only when moving from Open to In Progress
+            if (
+                status === TicketStatus.IN_PROGRESS &&
+                oldStatus === TicketStatus.OPEN
+            ) {
+                const categoryLabel =
+                    updated.category?.toLowerCase() || 'ticket';
+                this.githubService
+                    .createIssueAndAddToProject(updated.title, categoryLabel)
+                    .catch((err) => {
+                        this.logger.error(
+                            `Failed to sync to GitHub: ${err.message}`,
+                        );
+                    });
+            }
         }
 
         return updated;
@@ -320,7 +432,9 @@ export class TicketsService {
             throw new NotFoundException('Assignee user not found');
         }
         if (!INTERNAL_ROLES.includes(assignee.role)) {
-            throw new BadRequestException('Assignee must be a management team member');
+            throw new BadRequestException(
+                'Assignee must be a management team member',
+            );
         }
 
         ticket.assignee = assignee;
@@ -340,7 +454,11 @@ export class TicketsService {
         return updated;
     }
 
-    async addLabels(uuid: string, labelIds: string[], actor: UserModel): Promise<TicketModel> {
+    async addLabels(
+        uuid: string,
+        labelIds: string[],
+        actor: UserModel,
+    ): Promise<TicketModel> {
         const ticket = await this.findByUuid(uuid);
 
         const labels = await this.labelRepository.find({
@@ -377,7 +495,11 @@ export class TicketsService {
         return this.findByUuid(uuid);
     }
 
-    async removeLabel(ticketUuid: string, labelUuid: string, actor: UserModel): Promise<void> {
+    async removeLabel(
+        ticketUuid: string,
+        labelUuid: string,
+        actor: UserModel,
+    ): Promise<void> {
         const tl = await this.ticketLabelRepository.findOne({
             where: {
                 ticket: { uuid: ticketUuid },
@@ -393,7 +515,11 @@ export class TicketsService {
         await this.ticketLabelRepository.remove(tl);
 
         this.activitiesService
-            .logLabelsRemoved({ uuid: ticketUuid } as TicketModel, labelName, actor)
+            .logLabelsRemoved(
+                { uuid: ticketUuid } as TicketModel,
+                labelName,
+                actor,
+            )
             .catch(() => {});
     }
 
@@ -409,12 +535,17 @@ export class TicketsService {
         if (CUSTOMER_ROLES.includes(user.role)) {
             // Client can mention: their customer team (active) + all management users (active)
             const customerTeam = await this.userRepository.find({
-                where: { customer: { uuid: customerUuid }, status: UserStatus.ACTIVE },
+                where: {
+                    customer: { uuid: customerUuid },
+                    status: UserStatus.ACTIVE,
+                },
             });
             const managementTeam = await this.userRepository
                 .createQueryBuilder('user')
                 .where('user.role IN (:...roles)', { roles: INTERNAL_ROLES })
-                .andWhere('user.status = :status', { status: UserStatus.ACTIVE })
+                .andWhere('user.status = :status', {
+                    status: UserStatus.ACTIVE,
+                })
                 .getMany();
             users = [...customerTeam, ...managementTeam];
         } else {
@@ -422,10 +553,15 @@ export class TicketsService {
             const managementTeam = await this.userRepository
                 .createQueryBuilder('user')
                 .where('user.role IN (:...roles)', { roles: INTERNAL_ROLES })
-                .andWhere('user.status = :status', { status: UserStatus.ACTIVE })
+                .andWhere('user.status = :status', {
+                    status: UserStatus.ACTIVE,
+                })
                 .getMany();
             const customerTeam = await this.userRepository.find({
-                where: { customer: { uuid: customerUuid }, status: UserStatus.ACTIVE },
+                where: {
+                    customer: { uuid: customerUuid },
+                    status: UserStatus.ACTIVE,
+                },
             });
             users = [...managementTeam, ...customerTeam];
         }
