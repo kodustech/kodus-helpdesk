@@ -56,8 +56,9 @@ export class GitHubService {
         projectItemId?: string;
     }> {
         if (!this.isEnabled()) {
-            this.logger.warn('GitHub integration is disabled');
-            return { issueUrl: '', issueNumber: 0 };
+            const errorMessage = 'GitHub integration is disabled. Cannot create issue.';
+            this.logger.warn(errorMessage);
+            throw new Error(errorMessage);
         }
 
         try {
