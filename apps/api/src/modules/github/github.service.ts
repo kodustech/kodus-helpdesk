@@ -5,18 +5,13 @@ import axios, { AxiosInstance } from 'axios';
 @Injectable()
 export class GitHubService {
     private readonly logger = new Logger(GitHubService.name);
-    private readonly client: AxiosInstance;
+    private readonly client: AxiosInstance | null;
     private readonly organization: string;
     private readonly projectNumber: number;
     private readonly repository: string;
 
     constructor(private readonly configService: ConfigService) {
         const token = this.configService.get<string>('GITHUB_TOKEN');
-        if (!token) {
-            throw new Error(
-                'GITHUB_TOKEN environment variable is not configured. Please set it in your .env file.',
-            );
-        }
 
         this.organization = this.configService.get<string>(
             'GITHUB_ORG',
@@ -31,14 +26,25 @@ export class GitHubService {
             'kodus-ai',
         );
 
-        this.client = axios.create({
-            baseURL: 'https://api.github.com',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/vnd.github+json',
-                'X-GitHub-Api-Version': '2022-11-28',
-            },
-        });
+        if (!token) {
+            this.logger.warn(
+                'GITHUB_TOKEN not configured. GitHub integration will be disabled.',
+            );
+            this.client = null;
+        } else {
+            this.client = axios.create({
+                baseURL: 'https://api.github.com',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github+json',
+                    'X-GitHub-Api-Version': '2022-11-28',
+                },
+            });
+        }
+    }
+
+    private isEnabled(): boolean {
+        return this.client !== null;
     }
 
     async createIssueAndAddToProject(
@@ -49,6 +55,12 @@ export class GitHubService {
         issueNumber: number;
         projectItemId?: string;
     }> {
+        if (!this.isEnabled()) {
+            const errorMessage = 'GitHub integration is disabled. Cannot create issue.';
+            this.logger.warn(errorMessage);
+            throw new Error(errorMessage);
+        }
+
         try {
             const label =
                 category.charAt(0).toUpperCase() +

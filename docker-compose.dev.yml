@@ -17,7 +17,8 @@ services:
             - API_PG_DB_DATABASE=${API_PG_DB_DATABASE:-kodus_db}
             - JWT_SECRET=${JWT_SECRET:-helpdesk-dev-secret}
             - KODUS_JWT_SECRET=${KODUS_JWT_SECRET:-}
-            - MAILSEND_API_TOKEN=${MAILSEND_API_TOKEN:-}
+            - API_CUSTOMERIO_APP_API_TOKEN=${API_CUSTOMERIO_APP_API_TOKEN:-}
+            - API_CUSTOMERIO_BASE_URL=${API_CUSTOMERIO_BASE_URL:-https://api.customer.io}
             - HELPDESK_FRONTEND_URL=http://localhost:${WEB_PORT:-3004}
             - RUN_MIGRATIONS=${RUN_MIGRATIONS:-true}
             - RUN_SEEDS=${RUN_SEEDS:-true}

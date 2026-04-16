@@ -15,7 +15,8 @@ import { GitHubModule } from './modules/github/github.module';
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
-            envFilePath: ['.env'],
+            envFilePath: ['.env', '.env.local'],
+            ignoreEnvFile: false,
         }),
         TypeOrmModule.forRootAsync({
             imports: [ConfigModule],
