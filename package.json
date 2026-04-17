@@ -45,6 +45,8 @@
         "docker:logs": "docker compose -f docker-compose.dev.yml logs -f",
         "docker:clean": "docker compose -f docker-compose.dev.yml down -v --rmi all",
         "docker:up:infra": "docker compose -f docker-compose.dev.yml --profile local-db up -d",
+        "fetch:env:prod": "./scripts/dev/fetch-env-prod.sh prod",
+        "fetch:env:qa": "./scripts/dev/fetch-env-qa.sh qa",
         "test": "jest",
         "test:watch": "jest --watch",
         "test:cov": "jest --coverage"
@@ -89,6 +91,7 @@
         "prettier": "^3.8.1",
         "ts-jest": "^29.4.6",
         "ts-node": "^10.9.2",
+        "ts-loader": "^9.5.2",
         "tsconfig-paths": "^4.2.0",
         "typescript": "^5.9.3"
     }
