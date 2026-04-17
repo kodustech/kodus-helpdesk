@@ -35,7 +35,6 @@ KEYS=(
     "/qa/kodus-helpdesk/NEXTAUTH_URL"
     "/qa/kodus-helpdesk/NEXTAUTH_URL_INTERNAL"
     "/qa/kodus-helpdesk/NEXT_PUBLIC_API_URL"
-    "/qa/kodus-helpdesk/NEXT_PUBLIC_ALLOWED_PARENT_ORIGINS"
     "/qa/kodus-helpdesk/ALLOWED_PARENT_ORIGINS"
 
     # GitHub Integration
@@ -57,14 +56,13 @@ ENV_FILE=".env.$ENVIRONMENT"
 
 # Loop para buscar cada parâmetro
 for KEY in "${KEYS[@]}"; do
-  # Tenta obter o parâmetro, redirecionando mensagens de erro para /dev/null
-  VALUE=$(aws ssm get-parameter --name "$KEY" --with-decryption --query "Parameter.Value" --output text 2>/dev/null)
-
-  if [ -z "$VALUE" ] || [[ "$VALUE" == "ParameterNotFound" ]]; then
-    # Se o comando não retornar valor, registra um aviso (pode ser logado ou mostrado no stderr)
-    echo "WARNING: Parâmetro $KEY não encontrado." >&2
-  else
-    # Remove o caminho e escreve no arquivo .env
+  # Tenta obter o parâmetro. A falha é detectada pelo código de saída.
+  # Erros do AWS CLI são agora visíveis para o usuário.
+  if VALUE=$(aws ssm get-parameter --name "$KEY" --with-decryption --query "Parameter.Value" --output text); then
+    # O comando foi bem-sucedido, escreve a variável (mesmo que o valor esteja vazio)
     echo "${KEY##*/}=$VALUE" >> "$ENV_FILE"
+  else
+    # O comando falhou. O erro do AWS CLI já foi impresso no stderr.
+    echo "WARNING: Falha ao buscar o parâmetro $KEY. Verifique o erro acima." >&2
   fi
 done
