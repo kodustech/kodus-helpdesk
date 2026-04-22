@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useCreateTicket } from '@/core/hooks/useTickets';
+import { useUploadAttachments } from '@/core/hooks/useAttachments';
 import { useAuthApi } from '@/core/hooks/useAuthApi';
 import { useQuery } from '@tanstack/react-query';
 import { TicketDescriptionEditor } from './editor/TicketDescriptionEditor';
 import { CATEGORY_CONFIG } from './constants';
-import { Bug, Lightbulb, TrendingUp } from 'lucide-react';
+import { Bug, Lightbulb, TrendingUp, Paperclip, X as XIcon, FileText, FileSpreadsheet, FileCode, Image as ImageIcon, File as FileIcon } from 'lucide-react';
 
 const CATEGORY_ICONS = { bug: Bug, feature: Lightbulb, improvement: TrendingUp } as const;
 
@@ -24,12 +25,15 @@ export function CreateTicketModal({ onClose }: CreateTicketModalProps) {
 
     const { api } = useAuthApi();
     const createTicket = useCreateTicket();
+    const uploadAttachments = useUploadAttachments();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState<Record<string, any> | null>(null);
     const [category, setCategory] = useState<string>('bug');
     const [customerId, setCustomerId] = useState('');
     const [error, setError] = useState('');
+    const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
     // Load customers for management users
     const { data: customers = [] } = useQuery({
@@ -59,12 +63,25 @@ export function CreateTicketModal({ onClose }: CreateTicketModalProps) {
         }
 
         try {
-            await createTicket.mutateAsync({
+            const ticket = await createTicket.mutateAsync({
                 title: title.trim(),
                 description,
                 category,
                 customer_id: isCustomer ? undefined : customerId,
             });
+
+            // Upload pending files if any
+            if (pendingFiles.length > 0) {
+                try {
+                    await uploadAttachments.mutateAsync({
+                        ticketUuid: ticket.uuid,
+                        files: pendingFiles,
+                    });
+                } catch {
+                    // Ticket was created, files failed — don't block close
+                }
+            }
+
             onClose();
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to create ticket');
@@ -189,6 +206,81 @@ export function CreateTicketModal({ onClose }: CreateTicketModalProps) {
                         />
                     </div>
 
+                    {/* Attachments */}
+                    <div className="flex flex-col gap-1">
+                        <label className="text-sm font-medium text-text-primary select-none">
+                            Attachments
+                        </label>
+                        <div className="flex flex-col gap-2">
+                            {pendingFiles.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {pendingFiles.map((file, idx) => {
+                                        const isImg = file.type.startsWith('image/');
+                                        return (
+                                            <div
+                                                key={idx}
+                                                className="flex items-center gap-2 rounded-lg bg-card-lv1 px-3 py-1.5 ring-1 ring-card-lv3 text-xs"
+                                            >
+                                                {isImg ? (
+                                                    <ImageIcon className="size-3.5 text-text-tertiary" />
+                                                ) : file.type === 'application/pdf' || file.type.includes('word') ? (
+                                                    <FileText className="size-3.5 text-text-tertiary" />
+                                                ) : file.type.includes('excel') || file.type.includes('spreadsheet') || file.type === 'text/csv' ? (
+                                                    <FileSpreadsheet className="size-3.5 text-text-tertiary" />
+                                                ) : file.type === 'application/json' ? (
+                                                    <FileCode className="size-3.5 text-text-tertiary" />
+                                                ) : (
+                                                    <FileIcon className="size-3.5 text-text-tertiary" />
+                                                )}
+                                                <span className="max-w-32 truncate text-text-primary">
+                                                    {file.name}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setPendingFiles((f) =>
+                                                            f.filter((_, i) => i !== idx),
+                                                        )
+                                                    }
+                                                    className="text-text-tertiary hover:text-danger transition"
+                                                >
+                                                    <XIcon className="size-3" />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                            {pendingFiles.length < 5 && (
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="flex items-center gap-2 rounded-xl bg-card-lv1 px-4 py-2.5 text-sm text-text-secondary ring-1 ring-card-lv3 transition hover:brightness-120"
+                                >
+                                    <Paperclip className="size-4" />
+                                    Add files ({pendingFiles.length}/5)
+                                </button>
+                            )}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                multiple
+                                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.json"
+                                className="hidden"
+                                onChange={(e) => {
+                                    if (e.target.files) {
+                                        const newFiles = Array.from(e.target.files);
+                                        setPendingFiles((prev) => [
+                                            ...prev,
+                                            ...newFiles,
+                                        ].slice(0, 5));
+                                        e.target.value = '';
+                                    }
+                                }}
+                            />
+                        </div>
+                    </div>
+
                     {/* Actions */}
                     <div className="flex items-center gap-2 pt-2">
                         <button
@@ -200,10 +292,14 @@ export function CreateTicketModal({ onClose }: CreateTicketModalProps) {
                         </button>
                         <button
                             type="submit"
-                            disabled={createTicket.isPending}
+                            disabled={createTicket.isPending || uploadAttachments.isPending}
                             className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-primary-light px-5 py-2.5 text-sm font-semibold text-primary-dark transition hover:brightness-120 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            {createTicket.isPending ? 'Creating...' : 'Create Ticket'}
+                            {createTicket.isPending
+                                ? 'Creating...'
+                                : uploadAttachments.isPending
+                                  ? 'Uploading files...'
+                                  : 'Create Ticket'}
                         </button>
                     </div>
                 </form>

@@ -7,6 +7,7 @@ import { TicketDescriptionEditor } from './editor/TicketDescriptionEditor';
 import { TicketDetailSidebar } from './TicketDetailSidebar';
 import { CommentsSection } from './CommentsSection';
 import { HistoryTab } from './HistoryTab';
+import { AttachmentsSection } from './AttachmentsSection';
 import { X } from 'lucide-react';
 
 const CUSTOMER_ROLES = ['customer_owner', 'customer_admin', 'customer_editor'];
@@ -28,7 +29,7 @@ export function TicketDetailModal({ ticketUuid, onClose }: TicketDetailModalProp
 
     const [editingTitle, setEditingTitle] = useState(false);
     const [titleDraft, setTitleDraft] = useState('');
-    const [activeTab, setActiveTab] = useState<'comments' | 'history'>('comments');
+    const [activeTab, setActiveTab] = useState<'comments' | 'attachments' | 'history'>('comments');
 
     if (isLoading || !ticket) {
         return (
@@ -132,6 +133,17 @@ export function TicketDetailModal({ ticketUuid, onClose }: TicketDetailModalProp
                                 </button>
                                 <button
                                     type="button"
+                                    onClick={() => setActiveTab('attachments')}
+                                    className={`pb-2 text-sm font-medium transition border-b-2 ${
+                                        activeTab === 'attachments'
+                                            ? 'border-primary-light text-text-primary'
+                                            : 'border-transparent text-text-tertiary hover:text-text-primary'
+                                    }`}
+                                >
+                                    Attachments
+                                </button>
+                                <button
+                                    type="button"
                                     onClick={() => setActiveTab('history')}
                                     className={`pb-2 text-sm font-medium transition border-b-2 ${
                                         activeTab === 'history'
@@ -145,6 +157,9 @@ export function TicketDetailModal({ ticketUuid, onClose }: TicketDetailModalProp
 
                             {activeTab === 'comments' && (
                                 <CommentsSection ticketUuid={ticket.uuid} />
+                            )}
+                            {activeTab === 'attachments' && (
+                                <AttachmentsSection ticketUuid={ticket.uuid} />
                             )}
                             {activeTab === 'history' && (
                                 <HistoryTab ticketUuid={ticket.uuid} />
