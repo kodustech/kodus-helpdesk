@@ -10,6 +10,8 @@ import { MailModule } from './modules/mail/mail.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { GitHubModule } from './modules/github/github.module';
+import { StorageModule } from './modules/storage/storage.module';
+import { AttachmentsModule } from './modules/attachments/attachments.module';
 
 @Module({
     imports: [
@@ -31,6 +33,8 @@ import { GitHubModule } from './modules/github/github.module';
         TicketsModule,
         NotificationsModule,
         GitHubModule,
+        StorageModule,
+        AttachmentsModule,
     ],
 })
 export class ApiModule {}

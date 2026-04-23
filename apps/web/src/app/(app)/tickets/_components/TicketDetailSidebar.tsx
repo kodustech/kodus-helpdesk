@@ -84,7 +84,7 @@ export function TicketDetailSidebar({ ticket }: { ticket: any }) {
                             status: e.target.value,
                         })
                     }
-                    className="flex h-9 w-full items-center rounded-lg bg-card-lv1 pl-3 pr-8 text-sm text-text-primary ring-1 ring-card-lv3"
+                    className="flex h-9 w-full items-center rounded-lg bg-card-lv1 pl-3 pr-10 text-sm text-text-primary ring-1 ring-card-lv3"
                 >
                     {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
                         <option key={key} value={key}>
@@ -107,7 +107,7 @@ export function TicketDetailSidebar({ ticket }: { ticket: any }) {
                             category: e.target.value,
                         })
                     }
-                    className="flex h-9 w-full items-center rounded-lg bg-card-lv1 pl-3 pr-8 text-sm text-text-primary ring-1 ring-card-lv3"
+                    className="flex h-9 w-full items-center rounded-lg bg-card-lv1 pl-3 pr-10 text-sm text-text-primary ring-1 ring-card-lv3"
                 >
                     {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (
                         <option key={key} value={key}>
@@ -133,7 +133,7 @@ export function TicketDetailSidebar({ ticket }: { ticket: any }) {
                                 });
                             }
                         }}
-                        className="flex h-9 w-full items-center rounded-lg bg-card-lv1 pl-3 pr-8 text-sm text-text-primary ring-1 ring-card-lv3"
+                        className="flex h-9 w-full items-center rounded-lg bg-card-lv1 pl-3 pr-10 text-sm text-text-primary ring-1 ring-card-lv3"
                     >
                         <option value="">Unassigned</option>
                         {managementUsers.map((u: any) => (

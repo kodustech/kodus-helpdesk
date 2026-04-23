@@ -43,6 +43,12 @@ KEYS=(
     "/qa/kodus-helpdesk/GITHUB_PROJECT_NUMBER"
     "/qa/kodus-helpdesk/GITHUB_REPOSITORY"
 
+    # S3 / Storage
+    "/qa/kodus-helpdesk/AWS_REGION"
+    "/qa/kodus-helpdesk/AWS_ACCESS_KEY_ID"
+    "/qa/kodus-helpdesk/AWS_SECRET_ACCESS_KEY"
+    "/qa/kodus-helpdesk/AWS_BUCKET_NAME"
+
     # Docker
     "/qa/kodus-helpdesk/RUN_MIGRATIONS"
     "/qa/kodus-helpdesk/RUN_SEEDS"

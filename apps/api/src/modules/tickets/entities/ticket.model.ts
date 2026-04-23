@@ -13,6 +13,7 @@ import { UserModel } from '../../users/entities/user.model';
 import { CustomerModel } from '../../customers/entities/customer.model';
 import { TicketLabelModel } from './ticket-label.model';
 import { CommentModel } from './comment.model';
+import { AttachmentModel } from '../../attachments/entities/attachment.model';
 
 @Entity('tickets')
 @Index('IDX_tickets_customer_status', ['customer', 'status'])
@@ -58,4 +59,7 @@ export class TicketModel extends CoreModel {
 
     @OneToMany(() => CommentModel, (c) => c.ticket)
     comments: CommentModel[];
+
+    @OneToMany(() => AttachmentModel, (a) => a.ticket)
+    attachments: AttachmentModel[];
 }

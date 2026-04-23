@@ -14,6 +14,8 @@ import {
     MessageSquarePlus,
     MessageSquareX,
     Layers,
+    Upload,
+    Trash2,
 } from 'lucide-react';
 
 const ACTION_CONFIG: Record<
@@ -77,6 +79,21 @@ const ACTION_CONFIG: Record<
         icon: MessageSquareX,
         label: 'deleted a comment',
         renderDetail: () => '',
+    },
+    attachment_uploaded: {
+        icon: Upload,
+        label: 'uploaded files',
+        renderDetail: (m) =>
+            m?.filenames?.length
+                ? m.filenames.join(', ')
+                : m?.count
+                  ? `${m.count} file(s)`
+                  : '',
+    },
+    attachment_deleted: {
+        icon: Trash2,
+        label: 'deleted an attachment',
+        renderDetail: (m) => m?.filename || '',
     },
 };
 

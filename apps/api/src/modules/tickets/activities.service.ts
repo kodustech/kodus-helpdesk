@@ -129,4 +129,25 @@ export class ActivitiesService {
     ): Promise<void> {
         await this.log(ActivityAction.COMMENT_DELETED, ticket, actor);
     }
+
+    async logAttachmentUploaded(
+        ticket: TicketModel | { uuid: string },
+        filenames: string[],
+        actor: UserModel | { uuid: string },
+    ): Promise<void> {
+        await this.log(ActivityAction.ATTACHMENT_UPLOADED, ticket, actor, {
+            filenames,
+            count: filenames.length,
+        });
+    }
+
+    async logAttachmentDeleted(
+        ticket: TicketModel | { uuid: string },
+        filename: string,
+        actor: UserModel | { uuid: string },
+    ): Promise<void> {
+        await this.log(ActivityAction.ATTACHMENT_DELETED, ticket, actor, {
+            filename,
+        });
+    }
 }
