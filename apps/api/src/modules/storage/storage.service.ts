@@ -13,15 +13,19 @@ import { randomUUID } from 'crypto';
 export class StorageService {
     private readonly logger = new Logger(StorageService.name);
     private readonly s3: S3Client;
+    private readonly s3Public: S3Client;
     private readonly bucket: string;
 
     constructor(private readonly configService: ConfigService) {
         const endpoint = this.configService.get<string>('AWS_S3_ENDPOINT');
+        const publicEndpoint = this.configService.get<string>(
+            'AWS_S3_PUBLIC_ENDPOINT',
+        );
         const forcePathStyle =
             this.configService.get<string>('AWS_S3_FORCE_PATH_STYLE') ===
             'true';
 
-        this.s3 = new S3Client({
+        const commonConfig = {
             region:
                 this.configService.get<string>('AWS_REGION') || 'us-east-2',
             credentials: {
@@ -31,8 +35,23 @@ export class StorageService {
                     this.configService.get<string>('AWS_SECRET_ACCESS_KEY') ||
                     '',
             },
-            ...(endpoint && { endpoint }),
             forcePathStyle,
+        };
+
+        // Client for server-side operations (upload/delete) — uses internal endpoint
+        this.s3 = new S3Client({
+            ...commonConfig,
+            ...(endpoint && { endpoint }),
+        });
+
+        // Client for generating presigned URLs — uses public endpoint so browser can access them
+        this.s3Public = new S3Client({
+            ...commonConfig,
+            ...(publicEndpoint
+                ? { endpoint: publicEndpoint }
+                : endpoint
+                  ? { endpoint }
+                  : {}),
         });
 
         this.bucket =
@@ -81,7 +100,7 @@ export class StorageService {
             Key: key,
         });
 
-        return getSignedUrl(this.s3, command, {
+        return getSignedUrl(this.s3Public, command, {
             expiresIn: expiresInSeconds,
         });
     }
@@ -97,7 +116,7 @@ export class StorageService {
             ResponseContentDisposition: `attachment; filename="${filename}"`,
         });
 
-        return getSignedUrl(this.s3, command, {
+        return getSignedUrl(this.s3Public, command, {
             expiresIn: expiresInSeconds,
         });
     }

@@ -9,4 +9,6 @@ export enum ActivityAction {
     LABELS_REMOVED = 'labels_removed',
     COMMENT_ADDED = 'comment_added',
     COMMENT_DELETED = 'comment_deleted',
+    ATTACHMENT_UPLOADED = 'attachment_uploaded',
+    ATTACHMENT_DELETED = 'attachment_deleted',
 }

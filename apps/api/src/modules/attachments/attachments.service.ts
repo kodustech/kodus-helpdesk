@@ -10,6 +10,7 @@ import { AttachmentModel } from './entities/attachment.model';
 import { TicketModel } from '../tickets/entities/ticket.model';
 import { UserModel } from '../users/entities/user.model';
 import { StorageService } from '../storage/storage.service';
+import { ActivitiesService } from '../tickets/activities.service';
 import 'multer';
 
 const MAX_FILES_PER_TICKET = 5;
@@ -40,6 +41,7 @@ export class AttachmentsService {
         @InjectRepository(TicketModel)
         private readonly ticketRepository: Repository<TicketModel>,
         private readonly storageService: StorageService,
+        private readonly activitiesService: ActivitiesService,
     ) {}
 
     async upload(
@@ -102,6 +104,15 @@ export class AttachmentsService {
             attachments.push(await this.attachmentRepository.save(attachment));
         }
 
+        // Log activity
+        this.activitiesService
+            .logAttachmentUploaded(
+                { uuid: ticketUuid },
+                files.map((f) => f.originalname),
+                user,
+            )
+            .catch(() => {});
+
         return attachments;
     }
 
@@ -146,7 +157,7 @@ export class AttachmentsService {
     async delete(attachmentUuid: string, user: UserModel): Promise<void> {
         const attachment = await this.attachmentRepository.findOne({
             where: { uuid: attachmentUuid },
-            relations: ['uploadedBy'],
+            relations: ['uploadedBy', 'ticket'],
         });
 
         if (!attachment) {
@@ -163,7 +174,23 @@ export class AttachmentsService {
             );
         }
 
+        // Get ticket reference before removing
+        const ticketUuid = attachment.ticket
+            ? attachment.ticket.uuid
+            : undefined;
+
         await this.storageService.delete(attachment.s3Key);
         await this.attachmentRepository.remove(attachment);
+
+        // Log activity
+        if (ticketUuid) {
+            this.activitiesService
+                .logAttachmentDeleted(
+                    { uuid: ticketUuid },
+                    attachment.filename,
+                    user,
+                )
+                .catch(() => {});
+        }
     }
 }
