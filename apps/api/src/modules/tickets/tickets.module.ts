@@ -17,6 +17,7 @@ import { UserModel } from '../users/entities/user.model';
 import { EditorAssignmentModel } from '../users/entities/editor-assignment.model';
 import { CustomerModel } from '../customers/entities/customer.model';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { DiscordModule } from '../discord/discord.module';
 
 @Module({
     imports: [
@@ -32,6 +33,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
             CustomerModel,
         ]),
         NotificationsModule,
+        DiscordModule,
     ],
     providers: [TicketsService, LabelsService, CommentsService, ActivitiesService],
     controllers: [TicketsController, LabelsController, CommentsController],

@@ -18,6 +18,7 @@ import { UserRole, UserStatus, TicketStatus } from '../../config/enums';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ActivitiesService } from './activities.service';
 import { GitHubService } from '../github/github.service';
+import { DiscordService } from '../discord/discord.service';
 import { TicketCategory } from '../../config/enums';
 
 const INTERNAL_ROLES = [UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR];
@@ -49,6 +50,7 @@ export class TicketsService {
         private readonly notificationsService: NotificationsService,
         private readonly activitiesService: ActivitiesService,
         private readonly githubService: GitHubService,
+        private readonly discordService: DiscordService,
     ) {}
 
     async create(
@@ -120,10 +122,14 @@ export class TicketsService {
             .logTicketOpened(fullTicket, user)
             .catch(() => {});
 
-        // Notify: new ticket from client → all management users
+        // Notify: new ticket from client → all management users + Discord
         if (createdBySide === 'client') {
             this.notificationsService
                 .notifyNewTicket(fullTicket, user)
+                .catch(() => {});
+
+            this.discordService
+                .notifyNewClientTicket(fullTicket)
                 .catch(() => {});
         }
 

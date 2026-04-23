@@ -43,6 +43,9 @@ KEYS=(
     "/qa/kodus-helpdesk/GITHUB_PROJECT_NUMBER"
     "/qa/kodus-helpdesk/GITHUB_REPOSITORY"
 
+    # Discord
+    "/qa/kodus-helpdesk/DISCORD_WEBHOOK_URL"
+
     # S3 / Storage
     "/qa/kodus-helpdesk/AWS_REGION"
     "/qa/kodus-helpdesk/AWS_ACCESS_KEY_ID"
