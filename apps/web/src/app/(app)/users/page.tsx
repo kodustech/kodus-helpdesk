@@ -39,7 +39,7 @@ export default function UsersPage() {
     const [loading, setLoading] = useState(true);
     const [showInvite, setShowInvite] = useState(false);
     const [inviteEmails, setInviteEmails] = useState('');
-    const [inviteRole, setInviteRole] = useState('editor');
+    const [inviteRole, setInviteRole] = useState(isCustomer ? 'customer_editor' : 'editor');
     const [inviting, setInviting] = useState(false);
     const [error, setError] = useState('');
 
@@ -72,6 +72,9 @@ export default function UsersPage() {
             await api.post('/users/invite', {
                 emails,
                 role: inviteRole,
+                ...(isCustomer && session?.user?.customerId
+                    ? { customer_id: session.user.customerId }
+                    : {}),
             });
             setShowInvite(false);
             setInviteEmails('');
@@ -104,10 +107,12 @@ export default function UsersPage() {
                     <div className="flex w-full max-w-md flex-col overflow-hidden rounded-xl bg-card-lv2 shadow-sm">
                         <div className="flex flex-col gap-y-1.5 p-6">
                             <h2 className="text-lg font-bold leading-none text-text-primary">
-                                Invite Internal Users
+                                {isCustomer ? 'Invite Users' : 'Invite Internal Users'}
                             </h2>
                             <p className="text-sm text-text-secondary">
-                                Invite users to the Kodus helpdesk team
+                                {isCustomer
+                                    ? 'Invite users to your workspace'
+                                    : 'Invite users to the Kodus helpdesk team'}
                             </p>
                         </div>
 
@@ -141,8 +146,17 @@ export default function UsersPage() {
                                     onChange={(e) => setInviteRole(e.target.value)}
                                     className="flex h-12 w-full items-center rounded-xl bg-card-lv1 px-6 text-sm text-text-primary ring-1 ring-card-lv3 transition hover:brightness-120 focus:ring-3 focus:brightness-120"
                                 >
-                                    <option value="editor">Editor</option>
-                                    <option value="admin">Admin</option>
+                                    {isCustomer ? (
+                                        <>
+                                            <option value="customer_editor">Editor</option>
+                                            <option value="customer_admin">Admin</option>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <option value="editor">Editor</option>
+                                            <option value="admin">Admin</option>
+                                        </>
+                                    )}
                                 </select>
                             </div>
 
