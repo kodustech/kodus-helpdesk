@@ -91,8 +91,15 @@ export class UsersService {
         role: UserRole,
         customerId?: string,
     ): Promise<{ created: UserModel[]; skipped: string[] }> {
+        this.logger.log(
+            `[INVITE] Started — emails: [${emails.join(', ')}], role: ${role}, customerId: ${customerId || 'none'}, invitedBy: ${invitedBy.email}`,
+        );
+
         // Validate permissions
         if (!canManageRole(invitedBy, role, customerId)) {
+            this.logger.warn(
+                `[INVITE] Permission denied — ${invitedBy.email} (${invitedBy.role}) cannot invite role ${role}`,
+            );
             throw new ForbiddenException(
                 'You do not have permission to invite users with this role',
             );
@@ -105,8 +112,14 @@ export class UsersService {
                 .findOneBy({ uuid: customerId });
 
             if (!customer) {
+                this.logger.warn(
+                    `[INVITE] Customer not found: ${customerId}`,
+                );
                 throw new NotFoundException('Customer not found');
             }
+            this.logger.log(
+                `[INVITE] Customer resolved: ${customer.name} (${customer.uuid})`,
+            );
         }
 
         // Check which emails already exist in kodus-ai public.users
@@ -116,10 +129,13 @@ export class UsersService {
                 `SELECT uuid, email FROM public.users WHERE email = ANY($1)`,
                 [emails],
             );
-        } catch {
+            this.logger.log(
+                `[INVITE] Kodus cloud users found: ${kodusUsers.length > 0 ? kodusUsers.map((u) => u.email).join(', ') : 'none'}`,
+            );
+        } catch (err: any) {
             // public.users table might not exist (e.g., in isolated dev)
             this.logger.warn(
-                'Could not query public.users — assuming all users are local',
+                `[INVITE] Could not query public.users — ${err.message}. Assuming all users are local`,
             );
         }
 
@@ -138,11 +154,19 @@ export class UsersService {
                 email: normalizedEmail,
             });
             if (existing) {
+                this.logger.log(
+                    `[INVITE] Skipped ${normalizedEmail} — already exists (status: ${existing.status})`,
+                );
                 skipped.push(normalizedEmail);
                 continue;
             }
 
             const kodusUuid = kodusEmailMap.get(normalizedEmail);
+            const isCloud = !!kodusUuid;
+
+            this.logger.log(
+                `[INVITE] Creating user ${normalizedEmail} — type: ${isCloud ? 'cloud' : 'local'}, status: ${isCloud ? 'active' : 'pending'}`,
+            );
 
             const user = this.userRepository.create({
                 email: normalizedEmail,
@@ -155,17 +179,40 @@ export class UsersService {
 
             const savedUser = await this.userRepository.save(user);
             created.push(savedUser);
+            this.logger.log(
+                `[INVITE] User saved: ${savedUser.uuid} (${normalizedEmail})`,
+            );
 
             // Send invite email only for local users
             if (!kodusUuid) {
-                await this.mailService.sendInviteEmail(
-                    normalizedEmail,
-                    savedUser.uuid,
-                    customer?.name,
+                this.logger.log(
+                    `[INVITE] Sending invite email to ${normalizedEmail} (uuid: ${savedUser.uuid})`,
+                );
+                try {
+                    await this.mailService.sendInviteEmail(
+                        normalizedEmail,
+                        savedUser.uuid,
+                        customer?.name,
+                    );
+                    this.logger.log(
+                        `[INVITE] Email sent successfully to ${normalizedEmail}`,
+                    );
+                } catch (err: any) {
+                    this.logger.error(
+                        `[INVITE] Email FAILED for ${normalizedEmail}: ${err.message}`,
+                        err.stack,
+                    );
+                }
+            } else {
+                this.logger.log(
+                    `[INVITE] Skipping email for ${normalizedEmail} — cloud user (auto-activated)`,
                 );
             }
         }
 
+        this.logger.log(
+            `[INVITE] Done — created: ${created.length}, skipped: ${skipped.length}`,
+        );
         return { created, skipped };
     }
 
