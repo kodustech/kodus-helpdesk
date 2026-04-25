@@ -1,6 +1,6 @@
 services:
     helpdesk-api:
-        image: ghcr.io/kodustech/kodus-helpdesk-api:${HELPDESK_VERSION:-latest}
+        image: ${ECR_REGISTRY}/kodus-helpdesk-api:${IMAGE_TAG:-latest}
         ports:
             - '${API_PORT:-3003}:3003'
         env_file:
@@ -24,7 +24,7 @@ services:
             - helpdesk-network
 
     helpdesk-web:
-        image: ghcr.io/kodustech/kodus-helpdesk-web:${HELPDESK_VERSION:-latest}
+        image: ${ECR_REGISTRY}/kodus-helpdesk-web:${IMAGE_TAG:-latest}
         ports:
             - '${WEB_PORT:-3000}:3000'
         env_file:

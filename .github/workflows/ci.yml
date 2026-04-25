@@ -1,0 +1,44 @@
+name: CI
+
+on:
+    pull_request:
+        branches: [main]
+
+jobs:
+    typecheck-and-build:
+        name: Typecheck & Build
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4.2.2
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "22"
+
+            - name: Cache Yarn dependencies
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      .yarn/cache
+                      **/node_modules
+                  key: ${{ runner.os }}-node22-yarn-${{ hashFiles('**/yarn.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-node22-yarn-
+
+            - name: Install dependencies
+              run: yarn install --frozen-lockfile
+
+            - name: Typecheck API
+              run: npx tsc --noEmit --project apps/api/tsconfig.json
+
+            - name: Typecheck Web
+              run: npx tsc --noEmit --project apps/web/tsconfig.json
+
+            - name: Build API
+              run: yarn build:api
+
+            - name: Build Web
+              run: yarn build:web

@@ -1,6 +1,6 @@
 services:
     helpdesk-api:
-        image: kodus-helpdesk-api:latest
+        image: ${ECR_REGISTRY}/kodus-helpdesk-api:${IMAGE_TAG:-qa-latest}
         ports:
             - '${API_PORT:-3003}:3003'
         env_file:
@@ -24,7 +24,7 @@ services:
             - helpdesk-network
 
     helpdesk-web:
-        image: kodus-helpdesk-web:latest
+        image: ${ECR_REGISTRY}/kodus-helpdesk-web:${IMAGE_TAG:-qa-latest}
         ports:
             - '${WEB_PORT:-3000}:3000'
         env_file:
