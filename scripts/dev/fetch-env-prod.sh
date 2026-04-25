@@ -26,6 +26,7 @@ KEYS=(
     "/prod/kodus-helpdesk/HELPDESK_FRONTEND_URL"
     "/prod/kodus-helpdesk/MAIL_FROM_EMAIL"
     "/prod/kodus-helpdesk/MAIL_FROM_NAME"
+    "/prod/kodus-helpdesk/API_CUSTOMERIO_APP_API_TOKEN"
 
     # Web
     "/prod/kodus-helpdesk/WEB_PORT"
