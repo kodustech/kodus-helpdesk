@@ -11,7 +11,7 @@ terraform {
   backend "s3" {
     bucket = "kodus-terraform-state"
     key    = "helpdesk/terraform.tfstate"
-    region = "us-east-2"
+    region = "us-east-1"
   }
 }
 
