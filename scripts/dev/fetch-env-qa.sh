@@ -8,12 +8,12 @@ KEYS=(
     "/qa/kodus-helpdesk/API_PORT"
     "/qa/kodus-helpdesk/API_NODE_ENV"
 
-    # PostgreSQL
-    "/qa/kodus-helpdesk/API_PG_DB_HOST"
-    "/qa/kodus-helpdesk/API_PG_DB_PORT"
-    "/qa/kodus-helpdesk/API_PG_DB_USERNAME"
-    "/qa/kodus-helpdesk/API_PG_DB_PASSWORD"
-    "/qa/kodus-helpdesk/API_PG_DB_DATABASE"
+    # PostgreSQL (shared with orchestrator — helpdesk uses schema 'helpdesk')
+    "/qa/kodus-orchestrator/API_PG_DB_HOST"
+    "/qa/kodus-orchestrator/API_PG_DB_PORT"
+    "/qa/kodus-orchestrator/API_PG_DB_USERNAME"
+    "/qa/kodus-orchestrator/API_PG_DB_PASSWORD"
+    "/qa/kodus-orchestrator/API_PG_DB_DATABASE"
     "/qa/kodus-helpdesk/API_DATABASE_DISABLE_SSL"
 
     # JWT
@@ -65,13 +65,22 @@ ENV_FILE=".env.$ENVIRONMENT"
 # Limpe o arquivo .env existente ou crie um novo
 > $ENV_FILE
 
+# Escape de aspas simples para preservar caracteres especiais (ex: senha do DB)
+escape_squotes() {
+    printf "%s" "$1" | sed "s/'/'\"'\"'/g"
+}
+
 # Loop para buscar cada parâmetro
 for KEY in "${KEYS[@]}"; do
   # Tenta obter o parâmetro. A falha é detectada pelo código de saída.
   # Erros do AWS CLI são agora visíveis para o usuário.
   if VALUE=$(aws ssm get-parameter --name "$KEY" --with-decryption --query "Parameter.Value" --output text); then
-    # O comando foi bem-sucedido, escreve a variável (mesmo que o valor esteja vazio)
-    echo "${KEY##*/}=$VALUE" >> "$ENV_FILE"
+    if [ "$KEY" = "/qa/kodus-orchestrator/API_PG_DB_PASSWORD" ]; then
+      SAFE=$(escape_squotes "$VALUE")
+      echo "${KEY##*/}='${SAFE}'" >> "$ENV_FILE"
+    else
+      echo "${KEY##*/}=$VALUE" >> "$ENV_FILE"
+    fi
   else
     # O comando falhou. O erro do AWS CLI já foi impresso no stderr.
     echo "WARNING: Falha ao buscar o parâmetro $KEY. Verifique o erro acima." >&2
