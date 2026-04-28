@@ -1,85 +1,51 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
 
+# Deployed FLAT to ~/kodus-helpdesk/ on the EC2 host (alongside fetch-env-*.sh
+# and docker-compose.{qa,prod}.yml). In the repo it lives under scripts/ for
+# organization, but the relative paths inside (./fetch-env-*.sh and
+# docker-compose.{env}.yml) refer to the EC2 layout. Keep both copies in sync
+# when changing this file.
+#
 # Usage: ./start.sh <environment> <image_tag>
 # Example: ./start.sh qa abc123
 #          ./start.sh prod 1.0.0
 
-ENVIRONMENT="${1:?Usage: $0 <qa|prod> <image_tag>}"
-IMAGE_TAG="${2:?Usage: $0 <qa|prod> <image_tag>}"
+ENVIRONMENT=$1
+IMAGE_TAG=$2
 
 if [[ "$ENVIRONMENT" != "qa" && "$ENVIRONMENT" != "prod" ]]; then
     echo "Error: environment must be 'qa' or 'prod'"
     exit 1
 fi
 
-COMPOSE_FILE="docker-compose.${ENVIRONMENT}.yml"
-ENV_FILE=".env.${ENVIRONMENT}"
-
-echo "=== Kodus Helpdesk Deploy ==="
-echo "Environment: $ENVIRONMENT"
-echo "Image tag:   $IMAGE_TAG"
-echo "Compose:     $COMPOSE_FILE"
-echo ""
-
-# Validate required files
-if [ ! -f "$COMPOSE_FILE" ]; then
-    echo "Error: $COMPOSE_FILE not found"
+if [ -z "$IMAGE_TAG" ]; then
+    echo "Error: image tag is required"
     exit 1
 fi
 
-if [ ! -f "$ENV_FILE" ]; then
-    echo "Error: $ENV_FILE not found"
-    exit 1
-fi
+AWS_REGION="${AWS_REGION:-us-east-1}"
 
-# Login to ECR
-echo "Logging in to ECR..."
-ECR_REGISTRY=$(aws ecr get-login-password --region "${AWS_REGION:-us-east-2}" | \
-    docker login --username AWS --password-stdin \
-    "$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${AWS_REGION:-us-east-2}.amazonaws.com" 2>&1 | \
-    grep -oP '[\d]+\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com' || true)
+# Container names per service (env + tag avoids collisions across deploys)
+export CONTAINER_NAME_API="kodus-helpdesk-api-${ENVIRONMENT}-${IMAGE_TAG}"
+export CONTAINER_NAME_WEB="kodus-helpdesk-web-${ENVIRONMENT}-${IMAGE_TAG}"
 
-if [ -z "$ECR_REGISTRY" ]; then
-    ECR_REGISTRY="$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${AWS_REGION:-us-east-2}.amazonaws.com"
-    aws ecr get-login-password --region "${AWS_REGION:-us-east-2}" | \
-        docker login --username AWS --password-stdin "$ECR_REGISTRY"
-fi
+# ECR base URLs per service per environment
+export ECR_URL_API="611816806956.dkr.ecr.${AWS_REGION}.amazonaws.com/kodus-helpdesk-api-${ENVIRONMENT}"
+export ECR_URL_WEB="611816806956.dkr.ecr.${AWS_REGION}.amazonaws.com/kodus-helpdesk-web-${ENVIRONMENT}"
 
-export ECR_REGISTRY
-export IMAGE_TAG
+# Docker authentication with ECR
+aws ecr get-login-password --region "${AWS_REGION}" | docker login --username AWS --password-stdin "${ECR_URL_API}"
 
-echo "ECR Registry: $ECR_REGISTRY"
-echo "Pulling images..."
+# Fetch environment variables from AWS Parameter Store
+./fetch-env-${ENVIRONMENT}.sh "$ENVIRONMENT"
 
-# Pull new images
-docker compose -f "$COMPOSE_FILE" pull
+export NODE_ENV=production
 
-# Stop old containers and start new ones
-echo "Restarting services..."
-docker compose -f "$COMPOSE_FILE" down --remove-orphans
-docker compose -f "$COMPOSE_FILE" up -d
+# Image refs (used by docker-compose.${ENVIRONMENT}.yml)
+export IMAGE_NAME_API="${ECR_URL_API}:${IMAGE_TAG}"
+export IMAGE_NAME_WEB="${ECR_URL_WEB}:${IMAGE_TAG}"
 
-# Wait for API health
-echo "Waiting for API to be healthy..."
-for i in $(seq 1 30); do
-    if docker compose -f "$COMPOSE_FILE" ps helpdesk-api --format json 2>/dev/null | grep -q '"healthy"'; then
-        echo "API is healthy!"
-        break
-    fi
-    if [ "$i" -eq 30 ]; then
-        echo "Warning: API health check timed out after 30 attempts"
-        echo "Checking logs..."
-        docker compose -f "$COMPOSE_FILE" logs helpdesk-api --tail 20
-        exit 1
-    fi
-    sleep 5
-done
+# Use Docker Compose to start the containers
+docker compose -f docker-compose.${ENVIRONMENT}.yml up -d --force-recreate
 
-# Cleanup old images
-echo "Cleaning up old images..."
-docker image prune -f > /dev/null 2>&1 || true
-
-echo ""
-echo "=== Deploy complete ==="
-docker compose -f "$COMPOSE_FILE" ps
+docker system prune -f -a

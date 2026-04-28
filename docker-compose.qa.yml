@@ -1,6 +1,7 @@
 services:
     helpdesk-api:
-        image: ${ECR_REGISTRY}/kodus-helpdesk-api:${IMAGE_TAG:-qa-latest}
+        image: ${IMAGE_NAME_API}
+        container_name: ${CONTAINER_NAME_API}
         ports:
             - '${API_PORT:-3003}:3003'
         env_file:
@@ -20,11 +21,13 @@ services:
             options:
                 max-size: '200m'
                 max-file: '10'
+        restart: unless-stopped
         networks:
             - helpdesk-network
 
     helpdesk-web:
-        image: ${ECR_REGISTRY}/kodus-helpdesk-web:${IMAGE_TAG:-qa-latest}
+        image: ${IMAGE_NAME_WEB}
+        container_name: ${CONTAINER_NAME_WEB}
         ports:
             - '${WEB_PORT:-3000}:3000'
         env_file:
@@ -42,6 +45,7 @@ services:
             options:
                 max-size: '200m'
                 max-file: '10'
+        restart: unless-stopped
         networks:
             - helpdesk-network
 
