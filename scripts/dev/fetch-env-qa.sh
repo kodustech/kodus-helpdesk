@@ -22,7 +22,6 @@ KEYS=(
     "/qa/kodus-helpdesk/ACCESS_TOKEN_MAX_AGE"
 
     # MailerSend
-    "/qa/kodus-helpdesk/MAILSEND_API_TOKEN"
     "/qa/kodus-helpdesk/HELPDESK_FRONTEND_URL"
     "/qa/kodus-helpdesk/MAIL_FROM_EMAIL"
     "/qa/kodus-helpdesk/MAIL_FROM_NAME"
