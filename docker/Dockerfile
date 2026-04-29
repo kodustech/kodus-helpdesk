@@ -59,6 +59,8 @@ RUN chmod +x ./docker/prod-entrypoint.sh
 
 USER 1000
 
+EXPOSE 3003
+
 ENTRYPOINT ["./docker/prod-entrypoint.sh"]
 CMD ["node", "dist/apps/api/main.js"]
 
@@ -77,5 +79,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 
 USER 1000
+
+EXPOSE 3004
 
 CMD ["yarn", "--cwd", "apps/web", "start"]
