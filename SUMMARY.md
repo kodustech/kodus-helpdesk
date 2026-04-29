@@ -7,7 +7,7 @@ A helpdesk system for Kodus enterprise clients. Monorepo with NestJS API (backen
 - **Backend**: NestJS 11, TypeORM 0.3.28, PostgreSQL (schema `helpdesk` inside `kodus_db`), Passport JWT
 - **Frontend**: Next.js 15, React 19, TailwindCSS 4, Next-Auth v5, React Query
 - **Infra**: Docker (dev/qa/prod), Node 22.22, Yarn workspaces
-- **Email**: MailerSend API for invite emails
+- **Email**: Customer.io API for invite emails
 
 ## What's been built
 
@@ -69,11 +69,11 @@ All tables use UUID PKs, createdAt/updatedAt, snake_case FKs — matching kodus-
 - Permission helper with `canManageRole()`, `canChangeRole()`, `canRemoveUser()` functions
 - Password validation: `@IsStrongPassword` (min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 symbol) — same rules as kodus-ai
 
-### Email (MailerSend)
-- Invite emails sent via MailerSend HTTP API
+### Email (Customer.io)
+- Invite emails sent via Customer.io HTTP API
 - HTML template with Kodus dark theme branding
 - Invite link: `{HELPDESK_FRONTEND_URL}/invite/{user_uuid}`
-- Graceful fallback when `MAILSEND_API_TOKEN` is not configured (logs warning)
+- Graceful fallback when `API_CUSTOMERIO_APP_API_TOKEN` is not configured (logs warning)
 
 ### Frontend Pages
 
@@ -90,15 +90,13 @@ All tables use UUID PKs, createdAt/updatedAt, snake_case FKs — matching kodus-
 **Visual identity**: matches kodus-ai web exactly — dark theme (#101019 background), card levels (#181825/#202032/#30304b), primary orange (#f8b76d), h-12 inputs with rounded-xl, ring-1 borders, brightness-120 hover, DM Sans font.
 
 ### Docker Setup
-- `docker-compose.dev.yml` — API (port 3003) + Web (port 3004), connects to kodus-ai Postgres via `kodus-backend-services` network
-- `docker-compose.prod.yml` — production with GHCR images
-- `docker-compose.qa.yml` — QA environment
+- `docker-compose.dev.yml` — API (port 3003) + Web (port 3004), connects to kodus-ai Postgres via `kodus-backend-services` network. Has API healthcheck (Node fetch).
+- `docker-compose.qa.yml` / `docker-compose.prod.yml` — pulls images from AWS ECR (`kodus-helpdesk-{api,web}-{qa,prod}`). Image refs come from `IMAGE_NAME_API` / `IMAGE_NAME_WEB` env vars exported by `start.sh` on the EC2.
 - `Dockerfile.dev` — Node 22.22-slim with hot reload
-- `Dockerfile` — multi-stage production build (separate API and Web stages)
-- Entrypoints auto-run migrations and seeds on startup
-- API healthcheck uses Node fetch (no curl in slim image)
+- `Dockerfile` — multi-stage production build (separate `api` and `web` targets)
+- API entrypoint auto-runs migrations + seeds on startup (controlled by `RUN_MIGRATIONS` / `RUN_SEEDS` env)
 
-### Environment Variables
+### Environment Variables (local dev)
 ```
 API_PORT=3003
 API_PG_DB_HOST=localhost (db_postgres in Docker)
@@ -107,13 +105,16 @@ API_PG_DB_PASSWORD=123456
 API_PG_DB_DATABASE=kodus_db
 JWT_SECRET=helpdesk-change-me
 KODUS_JWT_SECRET= (must match kodus-ai's API_JWT_SECRET for cloud SSO)
-MAILSEND_API_TOKEN= (MailerSend)
+API_CUSTOMERIO_APP_API_TOKEN= (Customer.io)
+API_CUSTOMERIO_BASE_URL=https://api.customer.io
 HELPDESK_FRONTEND_URL=http://localhost:3004
 WEB_PORT=3004
 AUTH_SECRET= (Next-Auth)
 NEXTAUTH_URL=http://localhost:3004
 ALLOWED_PARENT_ORIGINS=http://localhost:3000 https://app.kodus.io (CSP frame-ancestors)
 ```
+
+**QA / prod**: env vars come from AWS SSM Parameter Store. App-level keys live under `/{qa,prod}/kodus-helpdesk/*`; Postgres credentials are reused from the orchestrator under `/{qa,prod}/kodus-orchestrator/API_PG_DB_*` (same DB, schema `helpdesk`). Full key list in `scripts/dev/fetch-env-{qa,prod}.sh`.
 
 **kodus-ai env vars needed:**
 ```
