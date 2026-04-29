@@ -2,7 +2,12 @@ import type { NextAuthConfig } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { api } from '../services/api';
 
-const ACCESS_TOKEN_MAX_AGE = 15 * 60; // 15 minutes in seconds
+const ACCESS_TOKEN_MAX_AGE_DEFAULT = 15 * 60; // 15 minutes in seconds
+const parsedMaxAge = Number(process.env.ACCESS_TOKEN_MAX_AGE);
+const ACCESS_TOKEN_MAX_AGE =
+    Number.isFinite(parsedMaxAge) && parsedMaxAge > 0
+        ? parsedMaxAge
+        : ACCESS_TOKEN_MAX_AGE_DEFAULT;
 const REFRESH_BUFFER = 60; // refresh 1 minute before expiry
 
 // Server-side deduplication: cache refresh promises by refresh token
