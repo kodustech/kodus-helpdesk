@@ -16,7 +16,7 @@ services:
             - API_PG_DB_PASSWORD=${API_PG_DB_PASSWORD:-123456}
             - API_PG_DB_DATABASE=${API_PG_DB_DATABASE:-kodus_db}
             - JWT_SECRET=${JWT_SECRET:-helpdesk-dev-secret}
-            - KODUS_JWT_SECRET=${KODUS_JWT_SECRET:-}
+            - API_JWT_PUBLIC_KEY=${API_JWT_PUBLIC_KEY:-}
             - API_CUSTOMERIO_APP_API_TOKEN=${API_CUSTOMERIO_APP_API_TOKEN:-}
             - API_CUSTOMERIO_BASE_URL=${API_CUSTOMERIO_BASE_URL:-https://api.customer.io}
             - HELPDESK_FRONTEND_URL=http://localhost:${WEB_PORT:-3004}
