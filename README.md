@@ -36,7 +36,7 @@ yarn install
 
 # 2. seed env
 cp .env.example .env
-# edit values you care about (KODUS_JWT_SECRET, AUTH_SECRET, etc.)
+# edit values you care about (API_JWT_PUBLIC_KEY, AUTH_SECRET, etc.)
 
 # 3. spin up everything (API + Web + MinIO; DB is optional via profile)
 yarn docker:up:infra      # start local Postgres (omit if reusing kodus-ai's)
@@ -79,7 +79,7 @@ You'll need a Postgres reachable at the env values in `.env` and the `helpdesk` 
 
 ## Cloud SSO with kodus-ai
 
-Helpdesk is embedded as an iframe inside kodus-ai's web app (`/helpdesk`). Auth tokens cross via `postMessage`; helpdesk validates the JWT using a shared `KODUS_JWT_SECRET`. Details in [SUMMARY.md](./SUMMARY.md#cloud-sso--iframe-integration-kodus-ai--helpdesk).
+Helpdesk is embedded as an iframe inside kodus-ai's web app (`/helpdesk`). kodus-ai generates a short-lived RS256 token via `GET /auth/helpdesk-token` and sends it to the iframe via `postMessage`; helpdesk verifies the JWT using the kodus-ai public key (`API_JWT_PUBLIC_KEY`). Details in [SUMMARY.md](./SUMMARY.md#cloud-sso--iframe-integration-kodus-ai--helpdesk).
 
 ## License
 
