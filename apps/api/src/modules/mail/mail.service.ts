@@ -80,13 +80,13 @@ export class MailService {
                 : `You've been invited to Kodus Helpdesk`;
 
             const html = `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; text-align: center;">
                     <h2>Welcome to ${organizationName}!</h2>
                     <p>You've been invited to join <strong>${organizationName}</strong> on Kodus Helpdesk.</p>
                     <p>Click the button below to accept your invitation and set up your account:</p>
                     <div style="text-align: center; margin: 32px 0;">
                         <a href="${inviteLink}"
-                           style="background-color: #0070f3; color: white; padding: 12px 24px;
+                           style="background-color: #F0A100; color: white; padding: 12px 24px;
                                   text-decoration: none; border-radius: 6px; display: inline-block;">
                             Accept Invitation
                         </a>
