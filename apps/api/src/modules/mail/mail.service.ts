@@ -2,19 +2,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
-type CustomerIoEmailPayload = {
-    transactional_message_id: string | number;
-    to: string;
-    from?: string;
-    subject?: string;
-    message_data?: Record<string, unknown>;
-    identifiers?: Record<string, string | number>;
-};
-
-const CUSTOMERIO_INVITE_TRANSACTIONAL_ID = 13;
-
 const DEFAULT_FROM_EMAIL = 'noreply@kodus.io';
 const DEFAULT_FROM_NAME = 'Kodus Helpdesk';
+const RESEND_API_BASE_URL = 'https://api.resend.com';
+
+type ResendEmailPayload = {
+    from: string;
+    to: string[];
+    subject: string;
+    html: string;
+};
 
 @Injectable()
 export class MailService {
@@ -22,63 +19,37 @@ export class MailService {
 
     constructor(private readonly configService: ConfigService) {}
 
-    private getRequiredString(envKey: string): string {
-        const value = this.configService.get<string>(envKey);
-        if (!value) {
-            throw new Error(`${envKey} is not set`);
+    private getApiKey(): string {
+        const apiKey = this.configService.get<string>('RESEND_API_KEY');
+        if (!apiKey) {
+            throw new Error('RESEND_API_KEY is not set');
         }
-        return value;
-    }
-
-    private getCustomerIoApiToken(): string {
-        return this.getRequiredString('API_CUSTOMERIO_APP_API_TOKEN');
-    }
-
-    private getCustomerIoBaseUrl(): string {
-        return (
-            this.configService.get<string>('API_CUSTOMERIO_BASE_URL') ||
-            'https://api.customer.io'
-        );
+        return apiKey;
     }
 
     private getFromAddress(): string {
-        const fromEmail = this.configService.get<string>('MAIL_FROM_EMAIL');
-        if (!fromEmail) {
-            return `${DEFAULT_FROM_NAME} <${DEFAULT_FROM_EMAIL}>`;
-        }
-        const fromName = this.configService.get<string>('MAIL_FROM_NAME');
-        return fromName ? `${fromName} <${fromEmail}>` : fromEmail;
+        const fromEmail =
+            this.configService.get<string>('MAIL_FROM_EMAIL') ||
+            DEFAULT_FROM_EMAIL;
+        const fromName =
+            this.configService.get<string>('MAIL_FROM_NAME') ||
+            DEFAULT_FROM_NAME;
+        return `${fromName} <${fromEmail}>`;
     }
 
-    private applyFromAddress(
-        payload: CustomerIoEmailPayload,
-    ): CustomerIoEmailPayload {
-        const fromAddress = this.getFromAddress();
-        if (fromAddress) {
-            payload.from = fromAddress;
-        }
+    private async sendEmail(payload: ResendEmailPayload): Promise<unknown> {
+        const apiKey = this.getApiKey();
 
-        return payload;
-    }
-
-    private buildIdentifiers(
-        email: string,
-    ): CustomerIoEmailPayload['identifiers'] {
-        return { email };
-    }
-
-    private async sendCustomerIoEmail(
-        payload: CustomerIoEmailPayload,
-    ): Promise<unknown> {
-        const apiToken = this.getCustomerIoApiToken();
-        const baseUrl = this.getCustomerIoBaseUrl();
-
-        const response = await axios.post(`${baseUrl}/v1/send/email`, payload, {
-            headers: {
-                'Authorization': `Bearer ${apiToken}`,
-                'Content-Type': 'application/json',
+        const response = await axios.post(
+            `${RESEND_API_BASE_URL}/emails`,
+            payload,
+            {
+                headers: {
+                    Authorization: `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                },
             },
-        });
+        );
 
         return response.data;
     }
@@ -88,12 +59,10 @@ export class MailService {
         userUuid: string,
         customerName?: string,
     ): Promise<void> {
-        const apiToken = this.configService.get<string>(
-            'API_CUSTOMERIO_APP_API_TOKEN',
-        );
-        if (!apiToken) {
+        const apiKey = this.configService.get<string>('RESEND_API_KEY');
+        if (!apiKey) {
             this.logger.warn(
-                `API_CUSTOMERIO_APP_API_TOKEN not configured. Invite email to ${email} not sent.`,
+                `RESEND_API_KEY not configured. Invite email to ${email} not sent.`,
             );
             return;
         }
@@ -105,32 +74,45 @@ export class MailService {
             );
             const inviteLink = `${frontendUrl}/invite/${userUuid}`;
 
-            const transactionalMessageId = CUSTOMERIO_INVITE_TRANSACTIONAL_ID;
+            const organizationName = customerName || 'Kodus Helpdesk';
+            const subject = customerName
+                ? `You've been invited to ${customerName} on Kodus Helpdesk`
+                : `You've been invited to Kodus Helpdesk`;
 
-            const payload: CustomerIoEmailPayload = {
-                transactional_message_id: transactionalMessageId,
-                to: email,
-                subject: customerName
-                    ? `You've been invited to ${customerName} on Kodus Helpdesk`
-                    : `You've been invited to Kodus Helpdesk`,
-                identifiers: this.buildIdentifiers(email),
-                message_data: {
-                    organizationName: customerName || 'Kodus Helpdesk',
-                    invitingUser: {
-                        email: 'admin',
-                    },
-                    teamName: customerName || 'Kodus Helpdesk',
-                    invitedUser: {
-                        name: email.split('@')[0],
-                        invite: inviteLink,
-                    },
-                },
-            };
+            const html = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; text-align: center;">
+                    <h2>Welcome to ${organizationName}!</h2>
+                    <p>You've been invited to join <strong>${organizationName}</strong> on Kodus Helpdesk.</p>
+                    <p>Click the button below to accept your invitation and set up your account:</p>
+                    <div style="text-align: center; margin: 32px 0;">
+                        <a href="${inviteLink}"
+                           style="background-color: #F0A100; color: white; padding: 12px 24px;
+                                  text-decoration: none; border-radius: 6px; display: inline-block;">
+                            Accept Invitation
+                        </a>
+                    </div>
+                    <p>Or copy and paste this link in your browser:</p>
+                    <p style="color: #666; word-break: break-all;">${inviteLink}</p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+                    <p style="color: #999; font-size: 12px;">
+                        If you did not expect this invitation, you can ignore this email.
+                    </p>
+                </div>
+            `;
 
-            await this.sendCustomerIoEmail(this.applyFromAddress(payload));
+            await this.sendEmail({
+                from: this.getFromAddress(),
+                to: [email],
+                subject,
+                html,
+            });
+
             this.logger.log(`Invite email sent to ${email}`);
         } catch (error) {
-            this.logger.error(`Error sending invite email to ${email}:`, error);
+            this.logger.error(
+                `Error sending invite email to ${email}:`,
+                error,
+            );
         }
     }
 }
