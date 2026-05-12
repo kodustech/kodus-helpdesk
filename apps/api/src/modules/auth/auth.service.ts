@@ -1,5 +1,6 @@
 import {
     Injectable,
+    Logger,
     UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -14,6 +15,8 @@ import { UserStatus } from '../../config/enums';
 
 @Injectable()
 export class AuthService {
+    private readonly logger = new Logger(AuthService.name);
+
     constructor(
         @InjectRepository(UserModel)
         private readonly userRepository: Repository<UserModel>,
@@ -135,18 +138,29 @@ export class AuthService {
     }
 
     async validateCloudToken(token: string) {
-        const kodusSecret = this.configService.get<string>('KODUS_JWT_SECRET');
+        const publicKey = this.configService
+            .get<string>('API_JWT_PUBLIC_KEY')
+            ?.replace(/\\n/g, '\n');
 
-        if (!kodusSecret) {
-            throw new UnauthorizedException('Cloud authentication not configured');
+        if (!publicKey) {
+            throw new UnauthorizedException(
+                'Cloud authentication not configured (API_JWT_PUBLIC_KEY missing)',
+            );
         }
 
         let payload: any;
         try {
-            payload = this.jwtService.verify(token, { secret: kodusSecret });
+            payload = this.jwtService.verify(token, {
+                secret: publicKey,
+                algorithms: ['RS256'],
+                issuer: 'kodus-ai',
+                audience: 'kodus-helpdesk',
+            } as any);
         } catch {
             throw new UnauthorizedException('Invalid cloud token');
         }
+
+        this.logger.log(`cloud_token_verified: sub=${payload.sub}`);
 
         // Find helpdesk user by external UUID (kodus-ai JWT uses 'sub' for user UUID)
         const user = await this.userRepository.findOne({

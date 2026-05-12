@@ -104,7 +104,7 @@ API_PG_DB_USERNAME=kodusdev
 API_PG_DB_PASSWORD=123456
 API_PG_DB_DATABASE=kodus_db
 JWT_SECRET=helpdesk-change-me
-KODUS_JWT_SECRET= (must match kodus-ai's API_JWT_SECRET for cloud SSO)
+API_JWT_PUBLIC_KEY= (kodus-ai RSA public key for cloud SSO token verification)
 API_CUSTOMERIO_APP_API_TOKEN= (Customer.io)
 API_CUSTOMERIO_BASE_URL=https://api.customer.io
 HELPDESK_FRONTEND_URL=http://localhost:3004
@@ -125,9 +125,9 @@ WEB_PORT_HELPDESK=3004
 ### Cloud SSO + Iframe Integration (kodus-ai ↔ helpdesk)
 - **Helpdesk embedded in kodus-ai** — helpdesk renders inside an iframe on `/helpdesk` page in kodus-ai, keeping kodus-ai's navigation visible
 - **Conditional visibility** — "Helpdesk" link appears in kodus-ai Support menu only for enterprise plans + cloud mode (not self-hosted)
-- **Secure token exchange** — kodus-ai passes its JWT access token via `postMessage` (no token in URL). Helpdesk iframe listens for `HELPDESK_CLOUD_AUTH_READY` → parent sends `HELPDESK_CLOUD_AUTH` with token
+- **Secure token exchange** — kodus-ai generates a dedicated RS256 token via `GET /auth/helpdesk-token` and passes it via `postMessage` (no token in URL). Helpdesk iframe listens for `HELPDESK_CLOUD_AUTH_READY` → parent sends `HELPDESK_CLOUD_AUTH` with token
 - **Cloud auth provider** — NextAuth has a second Credentials provider (`id: 'cloud'`) that calls `POST /api/auth/cloud` with the kodus-ai token
-- **Token validation** — helpdesk API verifies the kodus-ai JWT using shared `KODUS_JWT_SECRET` (= kodus-ai's `API_JWT_SECRET`), maps user via `payload.sub` → `external_user_uuid`
+- **Token validation** — helpdesk API verifies the RS256 JWT using kodus-ai's public key (`API_JWT_PUBLIC_KEY`), validates `iss: 'kodus-ai'` and `aud: 'kodus-helpdesk'`, maps user via `payload.sub` → `external_user_uuid`
 - **Compact header in iframe** — detects iframe mode (`window.self !== window.top`), shows a slim h-10 header with horizontal tabs instead of the full navbar
 - **Cookie isolation** — helpdesk NextAuth cookies use `helpdesk.` prefix to avoid collision with kodus-ai cookies on same domain
 - **CSP headers** — `frame-ancestors` configured via `ALLOWED_PARENT_ORIGINS` env var (replaces `X-Frame-Options: DENY`)

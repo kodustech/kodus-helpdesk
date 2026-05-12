@@ -18,7 +18,7 @@ KEYS=(
 
     # JWT
     "/qa/kodus-helpdesk/JWT_SECRET"
-    "/qa/kodus-helpdesk/KODUS_JWT_SECRET"
+    "/qa/kodus-helpdesk/API_JWT_PUBLIC_KEY"
     "/qa/kodus-helpdesk/ACCESS_TOKEN_MAX_AGE"
 
     # MailerSend
